@@ -495,6 +495,24 @@ function formatCurrency(value) {
 }
 
 /* --------------------------------
+   FORMAT FIELD VALUE
+   (keeps 0 visible once a dish is confirmed, but leaves a
+   never-touched draft field blank so its placeholder shows)
+-------------------------------- */
+
+function formatFieldValue(value, confirmed) {
+  if (!Number.isFinite(value)) {
+    return "";
+  }
+
+  if (value === 0 && !confirmed) {
+    return "";
+  }
+
+  return value;
+}
+
+/* --------------------------------
    RENDER
 -------------------------------- */
 
@@ -571,7 +589,7 @@ function render() {
                     min="0"
                     step="0.01"
                     placeholder="15.00"
-                    value="${dish.sellingPrice || ""}"
+                    value="${formatFieldValue(dish.sellingPrice, dish.confirmed)}"
                     data-field="sellingPrice"
                     ${inputsDisabled ? "disabled" : ""}
                 >
@@ -584,7 +602,7 @@ function render() {
                     min="0"
                     step="0.01"
                     placeholder="5.20"
-                    value="${dish.ingredientCost || ""}"
+                    value="${formatFieldValue(dish.ingredientCost, dish.confirmed)}"
                     data-field="ingredientCost"
                     ${inputsDisabled ? "disabled" : ""}
                 >
@@ -598,7 +616,7 @@ function render() {
                     step="1"
                     inputmode="numeric"
                     placeholder="420"
-                    value="${dish.unitsSold || ""}"
+                    value="${formatFieldValue(dish.unitsSold, dish.confirmed)}"
                     data-field="unitsSold"
                     ${inputsDisabled ? "disabled" : ""}
                 >
