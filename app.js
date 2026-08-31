@@ -1262,6 +1262,14 @@ function profitMapPosition(percent) {
   return clamped / (PROFIT_MAP_MAX_MULTIPLE * 100);
 }
 
+function truncateText(text, maxLength) {
+  if (!text) {
+    return "";
+  }
+
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+}
+
 function renderProfitMap(menu) {
   const container = document.getElementById("profitMap");
 
@@ -1285,6 +1293,7 @@ function renderProfitMap(menu) {
   const pad = PROFIT_MAP_PAD;
   const plotSize = size - pad * 2;
   const center = pad + plotSize / 2;
+  const showLabels = plottable.length <= 8;
 
   const points = plottable.map(dish => {
     const scores = calculatePerformanceScores(dish, menu);
@@ -1296,41 +1305,99 @@ function renderProfitMap(menu) {
     return { dish, x, y, category };
   });
 
+  const counts = points.reduce((acc, point) => {
+    acc[point.category.code] = (acc[point.category.code] || 0) + 1;
+
+    return acc;
+  }, {});
+
   const dots = points
-    .map(
-      point => `
+    .map(point => {
+      const nearRight = point.x > pad + plotSize * 0.72;
+      const labelX = nearRight ? point.x - 12 : point.x + 12;
+      const anchor = nearRight ? "end" : "start";
+
+      const label = showLabels
+        ? `
+            <text
+                x="${labelX.toFixed(1)}"
+                y="${(point.y + 4).toFixed(1)}"
+                class="profit-map-dot-label"
+                text-anchor="${anchor}"
+            >${escapeHtml(truncateText(point.dish.name, 14))}</text>
+        `
+        : "";
+
+      return `
             <circle
                 cx="${point.x.toFixed(1)}"
                 cy="${point.y.toFixed(1)}"
-                r="7"
+                r="8"
                 class="profit-map-dot profit-map-dot-${point.category.code}"
+                filter="url(#profitMapDotShadow)"
             >
                 <title>${escapeHtml(point.dish.name)}</title>
             </circle>
-        `
-    )
+            ${label}
+        `;
+    })
     .join("");
 
   container.innerHTML = `
         <svg viewBox="0 0 ${size} ${size}" class="profit-map-svg" role="img" aria-label="Profit map plotting each dish by relative sales and margin">
-            <rect x="${pad}" y="${pad}" width="${plotSize / 2}" height="${plotSize / 2}" class="profit-map-quadrant profit-map-quadrant-optimise" />
-            <rect x="${center}" y="${pad}" width="${plotSize / 2}" height="${plotSize / 2}" class="profit-map-quadrant profit-map-quadrant-strong" />
-            <rect x="${pad}" y="${center}" width="${plotSize / 2}" height="${plotSize / 2}" class="profit-map-quadrant profit-map-quadrant-review" />
-            <rect x="${center}" y="${center}" width="${plotSize / 2}" height="${plotSize / 2}" class="profit-map-quadrant profit-map-quadrant-grow" />
+            <defs>
+                <clipPath id="profitMapClip">
+                    <rect x="${pad}" y="${pad}" width="${plotSize}" height="${plotSize}" rx="14" />
+                </clipPath>
+                <filter id="profitMapDotShadow" x="-60%" y="-60%" width="220%" height="220%">
+                    <feDropShadow dx="0" dy="1.5" stdDeviation="1.4" flood-color="#000" flood-opacity="0.28" />
+                </filter>
+            </defs>
 
-            <line x1="${center}" y1="${pad}" x2="${center}" y2="${size - pad}" class="profit-map-axis" />
-            <line x1="${pad}" y1="${center}" x2="${size - pad}" y2="${center}" class="profit-map-axis" />
+            <g clip-path="url(#profitMapClip)">
+                <rect x="${pad}" y="${pad}" width="${plotSize / 2}" height="${plotSize / 2}" class="profit-map-quadrant profit-map-quadrant-optimise" />
+                <rect x="${center}" y="${pad}" width="${plotSize / 2}" height="${plotSize / 2}" class="profit-map-quadrant profit-map-quadrant-strong" />
+                <rect x="${pad}" y="${center}" width="${plotSize / 2}" height="${plotSize / 2}" class="profit-map-quadrant profit-map-quadrant-review" />
+                <rect x="${center}" y="${center}" width="${plotSize / 2}" height="${plotSize / 2}" class="profit-map-quadrant profit-map-quadrant-grow" />
 
-            <text x="${pad + plotSize / 4}" y="${pad + 18}" class="profit-map-label">⚠️ Optimise</text>
-            <text x="${center + plotSize / 4}" y="${pad + 18}" class="profit-map-label">⭐ Strong</text>
-            <text x="${pad + plotSize / 4}" y="${size - pad - 8}" class="profit-map-label">🧊 Review</text>
-            <text x="${center + plotSize / 4}" y="${size - pad - 8}" class="profit-map-label">🚀 Grow</text>
+                <line x1="${center}" y1="${pad}" x2="${center}" y2="${size - pad}" class="profit-map-axis" />
+                <line x1="${pad}" y1="${center}" x2="${size - pad}" y2="${center}" class="profit-map-axis" />
+            </g>
 
-            <text x="${size / 2}" y="${size - 6}" class="profit-map-axis-label">Margin →</text>
-            <text x="12" y="${size / 2}" class="profit-map-axis-label" transform="rotate(-90 12 ${size / 2})">Sales →</text>
+            <rect x="${pad}" y="${pad}" width="${plotSize}" height="${plotSize}" rx="14" class="profit-map-frame" />
+
+            <g class="profit-map-badge profit-map-badge-optimise" transform="translate(${pad + 10}, ${pad + 10})">
+                <rect width="98" height="24" rx="12" />
+                <text x="49" y="16" text-anchor="middle">⚠️ OPTIMISE</text>
+            </g>
+
+            <g class="profit-map-badge profit-map-badge-strong" transform="translate(${size - pad - 98}, ${pad + 10})">
+                <rect width="88" height="24" rx="12" />
+                <text x="44" y="16" text-anchor="middle">⭐ STRONG</text>
+            </g>
+
+            <g class="profit-map-badge profit-map-badge-review" transform="translate(${pad + 10}, ${size - pad - 34})">
+                <rect width="86" height="24" rx="12" />
+                <text x="43" y="16" text-anchor="middle">🧊 REVIEW</text>
+            </g>
+
+            <g class="profit-map-badge profit-map-badge-grow" transform="translate(${size - pad - 90}, ${size - pad - 34})">
+                <rect width="80" height="24" rx="12" />
+                <text x="40" y="16" text-anchor="middle">🚀 GROW</text>
+            </g>
+
+            <text x="${size / 2}" y="${size - 8}" class="profit-map-axis-label">Margin →</text>
+            <text x="14" y="${size / 2}" class="profit-map-axis-label" transform="rotate(-90 14 ${size / 2})">Sales →</text>
 
             ${dots}
         </svg>
+
+        <div class="profit-map-legend">
+            <span class="profit-map-legend-item"><i class="profit-map-swatch profit-map-swatch-strong"></i>Strong ${counts.strong || 0}</span>
+            <span class="profit-map-legend-item"><i class="profit-map-swatch profit-map-swatch-grow"></i>Grow ${counts.grow || 0}</span>
+            <span class="profit-map-legend-item"><i class="profit-map-swatch profit-map-swatch-optimise"></i>Optimise ${counts.optimise || 0}</span>
+            <span class="profit-map-legend-item"><i class="profit-map-swatch profit-map-swatch-review"></i>Review ${counts.review || 0}</span>
+        </div>
     `;
 }
 
@@ -1392,12 +1459,13 @@ function buildConfirmedDish(values, id) {
    CLEAR MENU
 -------------------------------- */
 
-function clearMenu() {
+function clearMenu(options = {}) {
+  const skipConfirm = options.skipConfirm === true;
   if (dishes.length === 0) {
     return;
   }
 
-  const confirmed = window.confirm(
+  const confirmed = skipConfirm || window.confirm(
     "This will remove every dish from your menu. Continue?"
   );
 
@@ -1655,10 +1723,10 @@ howItWorksBtn.addEventListener("click", openOnboarding);
 
 onboardingSampleBtn.addEventListener("click", () => {
   closeOnboarding();
-  loadSampleMenu();
 });
 
 onboardingStartBtn.addEventListener("click", () => {
+  clearMenu({ skipConfirm: true });
   closeOnboarding();
 });
 
@@ -1668,8 +1736,11 @@ onboardingStartBtn.addEventListener("click", () => {
 
 loadDishes();
 
-render();
+const isFirstVisit = dishes.length === 0 && !hasSeenOnboarding();
 
-if (dishes.length === 0 && !hasSeenOnboarding()) {
+if (isFirstVisit) {
+  loadSampleMenu();
   openOnboarding();
+} else {
+  render();
 }

@@ -1105,7 +1105,7 @@ button {
 }
 
 .profit-map-quadrant {
-    opacity: 0.5;
+    opacity: 0.55;
 }
 
 .profit-map-quadrant-strong {
@@ -1125,15 +1125,43 @@ button {
 }
 
 .profit-map-axis {
-    stroke: #cfcfc9;
-    stroke-width: 1;
+    stroke: #d5d5cf;
+    stroke-width: 1.5;
+    stroke-dasharray: 4 4;
 }
 
-.profit-map-label {
-    font-size: 12px;
-    font-weight: 700;
+.profit-map-frame {
+    fill: none;
 
-    fill: #555;
+    stroke: #dcdcd6;
+    stroke-width: 1.5;
+}
+
+.profit-map-badge rect {
+    fill: rgba(255, 255, 255, 0.85);
+}
+
+.profit-map-badge text {
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 0.02em;
+}
+
+.profit-map-badge-optimise text {
+    fill: #9a5100;
+}
+
+.profit-map-badge-strong text {
+    fill: #8a6d00;
+}
+
+.profit-map-badge-review text {
+    fill: #666;
+}
+
+.profit-map-badge-grow text {
+    fill: #1a5aa8;
 }
 
 .profit-map-axis-label {
@@ -1145,9 +1173,16 @@ button {
     text-anchor: middle;
 }
 
+.profit-map-dot-label {
+    font-size: 10px;
+    font-weight: 600;
+
+    fill: #555;
+}
+
 .profit-map-dot {
     stroke: white;
-    stroke-width: 2;
+    stroke-width: 2.5;
 }
 
 .profit-map-dot-strong {
@@ -1164,6 +1199,53 @@ button {
 
 .profit-map-dot-review {
     fill: #888;
+}
+
+.profit-map-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+
+    margin-top: 14px;
+    padding-top: 14px;
+
+    border-top: 1px solid #ececE8;
+}
+
+.profit-map-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    color: #555;
+}
+
+.profit-map-swatch {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+
+    border-radius: 50%;
+}
+
+.profit-map-swatch-strong {
+    background: #c9a300;
+}
+
+.profit-map-swatch-grow {
+    background: #1a5aa8;
+}
+
+.profit-map-swatch-optimise {
+    background: #b56a00;
+}
+
+.profit-map-swatch-review {
+    background: #888;
 }
 
 
