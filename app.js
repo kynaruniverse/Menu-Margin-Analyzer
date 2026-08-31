@@ -1294,15 +1294,19 @@ function markOnboardingSeen() {
 }
 
 function openOnboarding() {
-  if (onboardingModal) {
-    onboardingModal.hidden = false;
+  if (!onboardingModal) {
+    return;
   }
+
+  onboardingModal.hidden = false;
 }
 
 function closeOnboarding() {
-  if (onboardingModal) {
-    onboardingModal.hidden = true;
+  if (!onboardingModal) {
+    return;
   }
+
+  onboardingModal.hidden = true;
 
   markOnboardingSeen();
 }
@@ -1344,7 +1348,9 @@ onboardingSampleBtn.addEventListener("click", () => {
   loadSampleMenu();
 });
 
-onboardingStartBtn.addEventListener("click", closeOnboarding);
+onboardingStartBtn.addEventListener("click", () => {
+  closeOnboarding();
+});
 
 /* --------------------------------
    INITIAL RENDER

@@ -928,6 +928,10 @@ button {
     z-index: 100;
 }
 
+.onboarding-modal[hidden] {
+    display: none !important;
+}
+
 .onboarding-card {
     width: 100%;
     max-width: 440px;
