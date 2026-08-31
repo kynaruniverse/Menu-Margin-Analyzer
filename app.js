@@ -412,18 +412,18 @@ function categorizeDish(dish, menu) {
   const highMargin = dish.grossMarginPercent >= menu.averageMargin;
 
   if (highSales && highMargin) {
-    return { code: "star", label: "Star", icon: "⭐" };
+    return { code: "strong", label: "Strong", icon: "⭐" };
   }
 
   if (!highSales && highMargin) {
-    return { code: "potential", label: "Potential", icon: "🟡" };
+    return { code: "grow", label: "Grow", icon: "🚀" };
   }
 
   if (highSales && !highMargin) {
-    return { code: "fix", label: "Fix", icon: "🔴" };
+    return { code: "optimise", label: "Optimise", icon: "⚠️" };
   }
 
-  return { code: "investigate", label: "Investigate", icon: "⚫" };
+  return { code: "review", label: "Review", icon: "🧊" };
 }
 
 /* --------------------------------
@@ -465,20 +465,17 @@ function calculateOpportunity(dish, menu) {
    BIGGEST OPPORTUNITY
 -------------------------------- */
 
-function findBiggestOpportunity(menu) {
-  const opportunities = menu.calculatedDishes
+function findOpportunities(menu) {
+  return menu.calculatedDishes
     .map(dish => calculateOpportunity(dish, menu))
-    .filter(Boolean);
+    .filter(Boolean)
+    .sort((a, b) => b.monthlyImprovement - a.monthlyImprovement);
+}
 
-  if (opportunities.length === 0) {
-    return null;
-  }
+function findBiggestOpportunity(menu) {
+  const opportunities = findOpportunities(menu);
 
-  return opportunities.reduce((biggest, current) =>
-    current.monthlyImprovement > biggest.monthlyImprovement
-      ? current
-      : biggest
-  );
+  return opportunities.length > 0 ? opportunities[0] : null;
 }
 
 /* --------------------------------
@@ -972,6 +969,8 @@ function updateSummary() {
   const menu = calculateMenu();
 
   updateOpportunityPanel(menu);
+  renderOpportunityList(menu);
+  renderProfitMap(menu);
 
   totalRevenueEl.textContent = formatCurrency(menu.totalRevenue);
   totalIngredientCostEl.textContent = formatCurrency(
@@ -1040,6 +1039,138 @@ function updateOpportunityPanel(menu) {
                 <small>${formatCurrency(opportunity.annualImprovement)}/year if brought in line with your average food cost</small>
             </div>
         </div>
+    `;
+}
+
+/* --------------------------------
+   OPPORTUNITY LIST
+-------------------------------- */
+
+function renderOpportunityList(menu) {
+  const list = document.getElementById("opportunityList");
+
+  if (!list) {
+    return;
+  }
+
+  const opportunities = findOpportunities(menu);
+
+  if (opportunities.length === 0) {
+    list.innerHTML = `
+            <p class="opportunity-empty">
+                No opportunities to show yet — confirm a few dishes to see what deserves attention first.
+            </p>
+        `;
+
+    return;
+  }
+
+  list.innerHTML = opportunities
+    .map(
+      (opportunity, index) => `
+            <div class="opportunity-row">
+                <div class="opportunity-rank">${index + 1}</div>
+                <div class="opportunity-row-body">
+                    <strong>${escapeHtml(opportunity.dishName)}</strong>
+                    <span>
+                        ${opportunity.foodCostPercent.toFixed(1)}% food cost
+                        vs ${opportunity.benchmarkFoodCostPercent.toFixed(1)}% menu average
+                        · ${opportunity.unitsSold} sale${opportunity.unitsSold === 1 ? "" : "s"}/month
+                    </span>
+                </div>
+                <div class="opportunity-row-value">
+                    <strong>${formatCurrency(opportunity.monthlyImprovement)}/mo</strong>
+                    <small>${formatCurrency(opportunity.annualImprovement)}/yr</small>
+                </div>
+            </div>
+        `
+    )
+    .join("");
+}
+
+/* --------------------------------
+   PROFIT MAP
+-------------------------------- */
+
+const PROFIT_MAP_SIZE = 400;
+const PROFIT_MAP_PAD = 30;
+const PROFIT_MAP_MAX_MULTIPLE = 2;
+
+function profitMapPosition(percent) {
+  const clamped = Math.max(0, Math.min(percent, PROFIT_MAP_MAX_MULTIPLE * 100));
+
+  return clamped / (PROFIT_MAP_MAX_MULTIPLE * 100);
+}
+
+function renderProfitMap(menu) {
+  const container = document.getElementById("profitMap");
+
+  if (!container) {
+    return;
+  }
+
+  const plottable = menu.calculatedDishes.filter(dish => dish.sellingPrice > 0);
+
+  if (menu.dishCount < 2 || plottable.length === 0) {
+    container.innerHTML = `
+            <p class="profit-map-empty">
+                Confirm at least two dishes to see how your menu spreads across sales and margin.
+            </p>
+        `;
+
+    return;
+  }
+
+  const size = PROFIT_MAP_SIZE;
+  const pad = PROFIT_MAP_PAD;
+  const plotSize = size - pad * 2;
+  const center = pad + plotSize / 2;
+
+  const points = plottable.map(dish => {
+    const scores = calculatePerformanceScores(dish, menu);
+    const category = categorizeDish(dish, menu);
+
+    const x = pad + profitMapPosition(scores.marginPercent) * plotSize;
+    const y = pad + (1 - profitMapPosition(scores.salesPercent)) * plotSize;
+
+    return { dish, x, y, category };
+  });
+
+  const dots = points
+    .map(
+      point => `
+            <circle
+                cx="${point.x.toFixed(1)}"
+                cy="${point.y.toFixed(1)}"
+                r="7"
+                class="profit-map-dot profit-map-dot-${point.category.code}"
+            >
+                <title>${escapeHtml(point.dish.name)}</title>
+            </circle>
+        `
+    )
+    .join("");
+
+  container.innerHTML = `
+        <svg viewBox="0 0 ${size} ${size}" class="profit-map-svg" role="img" aria-label="Profit map plotting each dish by relative sales and margin">
+            <rect x="${pad}" y="${pad}" width="${plotSize / 2}" height="${plotSize / 2}" class="profit-map-quadrant profit-map-quadrant-optimise" />
+            <rect x="${center}" y="${pad}" width="${plotSize / 2}" height="${plotSize / 2}" class="profit-map-quadrant profit-map-quadrant-strong" />
+            <rect x="${pad}" y="${center}" width="${plotSize / 2}" height="${plotSize / 2}" class="profit-map-quadrant profit-map-quadrant-review" />
+            <rect x="${center}" y="${center}" width="${plotSize / 2}" height="${plotSize / 2}" class="profit-map-quadrant profit-map-quadrant-grow" />
+
+            <line x1="${center}" y1="${pad}" x2="${center}" y2="${size - pad}" class="profit-map-axis" />
+            <line x1="${pad}" y1="${center}" x2="${size - pad}" y2="${center}" class="profit-map-axis" />
+
+            <text x="${pad + plotSize / 4}" y="${pad + 18}" class="profit-map-label">⚠️ Optimise</text>
+            <text x="${center + plotSize / 4}" y="${pad + 18}" class="profit-map-label">⭐ Strong</text>
+            <text x="${pad + plotSize / 4}" y="${size - pad - 8}" class="profit-map-label">🧊 Review</text>
+            <text x="${center + plotSize / 4}" y="${size - pad - 8}" class="profit-map-label">🚀 Grow</text>
+
+            <text x="${size / 2}" y="${size - 6}" class="profit-map-axis-label">Margin →</text>
+            <text x="12" y="${size / 2}" class="profit-map-axis-label" transform="rotate(-90 12 ${size / 2})">Sales →</text>
+
+            ${dots}
+        </svg>
     `;
 }
 
