@@ -642,6 +642,91 @@ button {
     border: 1px solid #ddd !important;
 }
 
+.scenario-toggle {
+    background: #eef3fb;
+
+    color: #1a5aa8;
+}
+
+
+/* SCENARIO PANEL */
+
+.scenario-panel {
+    grid-column: 1 / -1;
+
+    margin-top: 4px;
+
+    padding: 14px;
+
+    background: #fafaf8;
+    border: 1px solid #ececE8;
+    border-radius: 12px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.scenario-title {
+    font-size: 11px;
+    font-weight: 800;
+
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+
+    color: #777;
+}
+
+.scenario-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.scenario-group label {
+    font-size: 12px;
+    font-weight: 700;
+
+    color: #333;
+}
+
+.scenario-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+}
+
+.scenario-row span {
+    font-size: 12px;
+    color: #999;
+
+    white-space: nowrap;
+}
+
+.scenario-row input {
+    width: 110px;
+
+    padding: 7px 10px;
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    font-size: 13px;
+
+    text-align: right;
+}
+
+.scenario-result {
+    font-size: 12px;
+    font-weight: 700;
+
+    color: #1a7a4a;
+
+    min-height: 16px;
+}
+
 
 .dish-card input:disabled {
     opacity: 0.7;

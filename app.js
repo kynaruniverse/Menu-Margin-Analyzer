@@ -76,6 +76,7 @@ function createDish() {
     unitsSold: 0,
     confirmed: false,
     editing: false,
+    scenarioOpen: false,
     saved: null
   };
 
@@ -491,6 +492,71 @@ function formatCurrency(value) {
   }).format(value);
 }
 
+function formatSignedCurrency(value) {
+  const sign = value > 0 ? "+" : value < 0 ? "\u2212" : "";
+
+  return `${sign}${formatCurrency(Math.abs(value))}`;
+}
+
+/* --------------------------------
+   SCENARIO ENGINE
+-------------------------------- */
+
+function calculatePriceScenario(dish, testPrice) {
+  const monthlyImprovement = (testPrice - dish.sellingPrice) * dish.unitsSold;
+
+  return { monthlyImprovement, annualImprovement: monthlyImprovement * 12 };
+}
+
+function calculateCostScenario(dish, testCost) {
+  const monthlyImprovement = (dish.ingredientCost - testCost) * dish.unitsSold;
+
+  return { monthlyImprovement, annualImprovement: monthlyImprovement * 12 };
+}
+
+function calculateSalesScenario(dish, testUnits) {
+  const monthlyImprovement = (testUnits - dish.unitsSold) * dish.grossProfit;
+
+  return { monthlyImprovement, annualImprovement: monthlyImprovement * 12 };
+}
+
+function updateScenarioResult(card, type, dish) {
+  const input = card.querySelector(`[data-scenario-input="${type}"]`);
+  const resultEl = card.querySelector(`[data-scenario-result="${type}"]`);
+
+  if (!input || !resultEl) {
+    return;
+  }
+
+  const testValue = Number(input.value);
+
+  if (!Number.isFinite(testValue)) {
+    resultEl.textContent = "";
+
+    return;
+  }
+
+  const source = dish.confirmed && dish.saved ? dish.saved : dish;
+  const analyticalDish = calculateDish(source);
+
+  let result;
+
+  if (type === "price") {
+    result = calculatePriceScenario(analyticalDish, testValue);
+  } else if (type === "cost") {
+    result = calculateCostScenario(analyticalDish, testValue);
+  } else {
+    result = calculateSalesScenario(
+      analyticalDish,
+      Math.max(0, Math.floor(testValue))
+    );
+  }
+
+  resultEl.textContent =
+    `${formatSignedCurrency(result.monthlyImprovement)}/month` +
+    ` \u00b7 ${formatSignedCurrency(result.annualImprovement)}/year`;
+}
+
 /* --------------------------------
    FORMAT FIELD VALUE
    (keeps 0 visible once a dish is confirmed, but leaves a
@@ -652,6 +718,20 @@ function render() {
                         `
                 }
 
+                ${
+                  dish.confirmed
+                    ? `
+                            <button
+                                class="scenario-toggle"
+                                type="button"
+                                data-scenario-toggle="${dish.id}"
+                            >
+                                ${dish.scenarioOpen ? "Hide scenarios" : "Test scenarios"}
+                            </button>
+                        `
+                    : ""
+                }
+
                 <button
                     class="delete-dish"
                     type="button"
@@ -778,6 +858,63 @@ function render() {
             }
 
             ${
+              dish.confirmed && dish.scenarioOpen
+                ? `
+                        <div class="scenario-panel">
+                            <div class="scenario-title">
+                                What-if scenarios
+                            </div>
+
+                            <div class="scenario-group">
+                                <label>Test selling price</label>
+                                <div class="scenario-row">
+                                    <span>Current: ${formatCurrency(analyticalDish.sellingPrice)}</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value="${analyticalDish.sellingPrice.toFixed(2)}"
+                                        data-scenario-input="price"
+                                    >
+                                </div>
+                                <div class="scenario-result" data-scenario-result="price"></div>
+                            </div>
+
+                            <div class="scenario-group">
+                                <label>Test ingredient cost</label>
+                                <div class="scenario-row">
+                                    <span>Current: ${formatCurrency(analyticalDish.ingredientCost)}</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value="${analyticalDish.ingredientCost.toFixed(2)}"
+                                        data-scenario-input="cost"
+                                    >
+                                </div>
+                                <div class="scenario-result" data-scenario-result="cost"></div>
+                            </div>
+
+                            <div class="scenario-group">
+                                <label>Test units sold</label>
+                                <div class="scenario-row">
+                                    <span>Current: ${analyticalDish.unitsSold}</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value="${analyticalDish.unitsSold}"
+                                        data-scenario-input="sales"
+                                    >
+                                </div>
+                                <div class="scenario-result" data-scenario-result="sales"></div>
+                            </div>
+                        </div>
+                    `
+                : ""
+            }
+
+            ${
               analyticalDish.warnings.length > 0
                 ? `
                         <div class="dish-warning">
@@ -819,6 +956,29 @@ function render() {
     if (editButton) {
       editButton.addEventListener("click", () => {
         editDish(dish.id);
+      });
+    }
+
+    const scenarioToggle = card.querySelector("[data-scenario-toggle]");
+
+    if (scenarioToggle) {
+      scenarioToggle.addEventListener("click", () => {
+        dish.scenarioOpen = !dish.scenarioOpen;
+        render();
+      });
+    }
+
+    if (dish.confirmed && dish.scenarioOpen) {
+      ["price", "cost", "sales"].forEach(type => {
+        updateScenarioResult(card, type, dish);
+
+        const input = card.querySelector(`[data-scenario-input="${type}"]`);
+
+        if (input) {
+          input.addEventListener("input", () => {
+            updateScenarioResult(card, type, dish);
+          });
+        }
       });
     }
 
@@ -1218,6 +1378,7 @@ function buildConfirmedDish(values, id) {
     unitsSold: values.unitsSold,
     confirmed: true,
     editing: false,
+    scenarioOpen: false,
     saved: {
       name: values.name,
       sellingPrice: values.sellingPrice,
