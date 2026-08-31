@@ -33,6 +33,49 @@
             </div>
         </header>
 
+        <nav class="screen-tabs" role="tablist" aria-label="Menu Margin Analyzer sections">
+            <button
+                type="button"
+                class="screen-tab"
+                data-screen="menu"
+                role="tab"
+                aria-selected="true"
+                aria-controls="screen-menu"
+            >
+                Menu
+            </button>
+            <button
+                type="button"
+                class="screen-tab"
+                data-screen="summary"
+                role="tab"
+                aria-selected="false"
+                aria-controls="screen-summary"
+            >
+                Summary
+            </button>
+            <button
+                type="button"
+                class="screen-tab"
+                data-screen="profitmap"
+                role="tab"
+                aria-selected="false"
+                aria-controls="screen-profitmap"
+            >
+                Profit map
+            </button>
+            <button
+                type="button"
+                class="screen-tab"
+                data-screen="opportunities"
+                role="tab"
+                aria-selected="false"
+                aria-controls="screen-opportunities"
+            >
+                Opportunities
+            </button>
+        </nav>
+
         <div id="onboardingModal" class="onboarding-modal" hidden>
             <div class="onboarding-card">
                 <p class="eyebrow">WELCOME</p>
@@ -68,7 +111,7 @@
         </div>
 
 
-        <section class="dish-section">
+        <section id="screen-menu" class="screen dish-section" role="tabpanel" aria-labelledby="menu">
 
             <div class="section-heading">
                 <div>
@@ -114,7 +157,7 @@
         </section>
 
 
-        <section class="summary-section">
+        <section id="screen-summary" class="screen summary-section" role="tabpanel" aria-labelledby="summary" hidden>
 
             <div class="section-heading">
                 <p class="section-label">OVERVIEW</p>
@@ -190,7 +233,7 @@
         </section>
 
 
-        <section class="profit-map-section">
+        <section id="screen-profitmap" class="screen profit-map-section" role="tabpanel" aria-labelledby="profitmap" hidden>
 
             <div class="section-heading">
                 <div>
@@ -204,7 +247,7 @@
         </section>
 
 
-        <section class="opportunities-section">
+        <section id="screen-opportunities" class="screen opportunities-section" role="tabpanel" aria-labelledby="opportunities" hidden>
 
             <div class="section-heading">
                 <div>

@@ -13,6 +13,9 @@ const onboardingModal = document.getElementById("onboardingModal");
 const onboardingSampleBtn = document.getElementById("onboardingSampleBtn");
 const onboardingStartBtn = document.getElementById("onboardingStartBtn");
 
+const screenTabs = document.querySelectorAll(".screen-tab");
+const screens = document.querySelectorAll(".screen");
+
 const ONBOARDING_KEY = "mma_onboarded_v1";
 
 const totalRevenueEl = document.getElementById("totalRevenue");
@@ -1690,8 +1693,31 @@ function closeOnboarding() {
 }
 
 /* --------------------------------
+   SCREEN NAVIGATION
+-------------------------------- */
+
+function setScreen(screenName) {
+  screens.forEach(screen => {
+    screen.hidden = screen.id !== `screen-${screenName}`;
+  });
+
+  screenTabs.forEach(tab => {
+    const isActive = tab.dataset.screen === screenName;
+
+    tab.classList.toggle("screen-tab-active", isActive);
+    tab.setAttribute("aria-selected", isActive ? "true" : "false");
+  });
+}
+
+/* --------------------------------
    EVENTS
 -------------------------------- */
+
+screenTabs.forEach(tab => {
+  tab.addEventListener("click", () => {
+    setScreen(tab.dataset.screen);
+  });
+});
 
 addDishBtn.addEventListener("click", createDish);
 
@@ -1735,6 +1761,8 @@ onboardingStartBtn.addEventListener("click", () => {
 -------------------------------- */
 
 loadDishes();
+
+setScreen("menu");
 
 const isFirstVisit = dishes.length === 0 && !hasSeenOnboarding();
 

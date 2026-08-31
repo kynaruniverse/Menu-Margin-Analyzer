@@ -66,6 +66,65 @@ button {
 }
 
 
+/* SCREEN TABS */
+
+.screen-tabs {
+    display: flex;
+    gap: 4px;
+
+    padding: 4px;
+
+    background: #ecece7;
+    border-radius: 12px;
+}
+
+.screen-tab {
+    flex: 1;
+
+    border: 0;
+    border-radius: 9px;
+
+    padding: 10px 8px;
+
+    background: transparent;
+    color: #666;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.screen-tab:hover {
+    color: #171717;
+}
+
+.screen-tab-active,
+.screen-tab-active:hover {
+    background: white;
+    color: #171717;
+
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.screen[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 480px) {
+    .screen-tabs {
+        overflow-x: auto;
+    }
+
+    .screen-tab {
+        font-size: 12px;
+        padding: 10px 6px;
+        white-space: nowrap;
+    }
+}
+
+
 /* SECTION */
 
 .dish-section,
@@ -1331,5 +1390,15 @@ button {
     .onboarding-modal,
     .text-link {
         display: none !important;
+    }
+}
+
+@media print {
+    .screen-tabs {
+        display: none !important;
+    }
+
+    .screen[hidden] {
+        display: block !important;
     }
 }

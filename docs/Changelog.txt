@@ -1,0 +1,35 @@
+MENU MARGIN ANALYZER — CHANGELOG
+=================================
+
+Version 1.0
+-----------
+Initial release.
+
+Included:
+
+- Menu screen: add, edit, confirm and remove dishes. Dishes are drafts
+  until confirmed — drafts don't affect your numbers.
+- Summary screen: total revenue, ingredient cost, gross profit, overall
+  food cost, and menu benchmarks (average sales, margin, profit per
+  sale, total profit per dish).
+- Profit Map screen: a visual scatter map plotting every confirmed dish
+  by relative sales and margin, split into four categories —
+  Strong, Grow, Optimise, Review.
+- Opportunities screen: every dish running a higher food cost than your
+  menu average, ranked by potential monthly and annual improvement,
+  plus a "Biggest Opportunity" panel on the Summary screen.
+- What-if scenarios: per-dish testing of price changes, ingredient cost
+  changes, and sales volume changes, each showing the projected
+  monthly and annual impact.
+- Sample menu: a six-dish example menu to explore the tool immediately,
+  shown automatically on first launch.
+- CSV import and export, and a printable report covering all four
+  screens regardless of which one is on screen when you print.
+- All data is stored locally in your browser. Nothing is uploaded
+  anywhere.
+
+Note: the What-if Scenario tools were originally planned for a later
+update but shipped as part of this first release.
+
+Nothing to report yet for future versions — check back here after
+your next download for what's new.

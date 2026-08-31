@@ -1,0 +1,63 @@
+MENU MARGIN ANALYZER — LICENCE AGREEMENT
+==========================================
+
+Version 1.0
+
+This software ("Menu Margin Analyzer") is a digital product licensed,
+not sold, to you ("the Licensee") for use under the terms below.
+
+1. GRANT OF LICENCE
+
+Upon purchase, you are granted a non-exclusive, non-transferable
+licence to use this software for your own restaurant, café, pub, or
+hospitality business, or on behalf of clients you personally advise
+or consult for.
+
+You may:
+
+- Install and run this software on any device you own or control.
+- Use it for as many menus, dishes, and businesses as you like,
+  provided the use stays within your own business(es) or your own
+  client advisory work.
+- Print or export reports it generates for your own internal or
+  client-facing use.
+
+2. RESTRICTIONS
+
+You may not:
+
+- Resell, sublicense, rent, lease, or otherwise redistribute this
+  software or its source files (index.html, style.css, app.js) as a
+  standalone product or as part of any other product or bundle.
+- Remove or alter any copyright, licence, or attribution notices.
+- Claim authorship of the software.
+- Use this software to build a competing product for commercial
+  distribution.
+
+3. NO WARRANTY
+
+This software is provided "as is," without warranty of any kind,
+express or implied. The figures, categories, and "potential
+improvement" estimates it produces are modelled possibilities based
+on the numbers you enter, not guarantees of actual results. You are
+responsible for verifying all outputs before making business
+decisions based on them.
+
+4. LIMITATION OF LIABILITY
+
+In no event shall the author be liable for any claim, damages, or
+other liability arising from the use of this software.
+
+5. DATA
+
+This software stores all data locally in your browser. No data is
+transmitted to the author or any third party. You are responsible for
+backing up your own data (via CSV export) as you see fit.
+
+6. TERMINATION
+
+This licence remains in effect until terminated. It terminates
+automatically if you fail to comply with any of its terms.
+
+For licensing questions beyond the scope of this agreement, contact
+the author through the marketplace listing you purchased this from.
