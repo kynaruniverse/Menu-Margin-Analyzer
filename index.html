@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Menu Margin Analyzer</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <main class="app">
+
+        <header class="app-header">
+            <div>
+                <p class="eyebrow">MENU MARGIN ANALYZER</p>
+
+                <h1>Know which dishes make you money.</h1>
+
+                <p class="subtitle">
+                    Analyse your menu and find where your profit is really coming from.
+                </p>
+
+                <button id="howItWorksBtn" class="text-link" type="button">
+                    How this works
+                </button>
+            </div>
+        </header>
+
+        <div id="onboardingModal" class="onboarding-modal" hidden>
+            <div class="onboarding-card">
+                <p class="eyebrow">WELCOME</p>
+
+                <h2>Three steps to find your profit leaks.</h2>
+
+                <ol class="onboarding-steps">
+                    <li>
+                        <strong>Add your dishes.</strong>
+                        Selling price, ingredient cost and units sold for each one.
+                    </li>
+                    <li>
+                        <strong>Confirm them.</strong>
+                        Confirmed dishes get analysed and categorised.
+                    </li>
+                    <li>
+                        <strong>Read the results.</strong>
+                        Every dish is tagged Star, Workhorse, Problem or Dead weight,
+                        and we point straight at your single biggest opportunity.
+                    </li>
+                </ol>
+
+                <div class="onboarding-actions">
+                    <button id="onboardingSampleBtn" class="primary-button" type="button">
+                        Show me with a sample menu
+                    </button>
+
+                    <button id="onboardingStartBtn" class="ghost-button" type="button">
+                        Start with my own menu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <section class="dish-section">
+
+            <div class="section-heading">
+                <div>
+                    <p class="section-label">MENU</p>
+                    <h2>Your dishes</h2>
+                </div>
+
+                <button id="addDishBtn" class="primary-button">
+                    + Add dish
+                </button>
+            </div>
+
+            <div class="toolbar">
+                <button id="sampleMenuBtn" class="ghost-button" type="button">
+                    Load sample menu
+                </button>
+
+                <button id="importCsvBtn" class="ghost-button" type="button">
+                    Import CSV
+                </button>
+
+                <input
+                    type="file"
+                    id="csvFileInput"
+                    accept=".csv,text/csv"
+                    hidden
+                >
+
+                <button id="exportCsvBtn" class="ghost-button" type="button">
+                    Export CSV
+                </button>
+
+                <button id="clearMenuBtn" class="ghost-button ghost-danger" type="button">
+                    Clear menu
+                </button>
+            </div>
+
+
+            <div id="dishList" class="dish-list">
+                <!-- Dishes will appear here -->
+            </div>
+
+        </section>
+
+
+        <section class="summary-section">
+
+            <div class="section-heading">
+                <p class="section-label">OVERVIEW</p>
+
+                <button id="printReportBtn" class="ghost-button" type="button">
+                    Print report
+                </button>
+            </div>
+
+            <div class="summary-grid">
+
+                <div class="summary-card">
+                    <span>Total revenue</span>
+                    <strong id="totalRevenue">£0.00</strong>
+                </div>
+
+                <div class="summary-card">
+                    <span>Total ingredient cost</span>
+                    <strong id="totalIngredientCost">£0.00</strong>
+                </div>
+
+                <div class="summary-card">
+                    <span>Total gross profit</span>
+                    <strong id="totalGrossProfit">£0.00</strong>
+                </div>
+
+                <div class="summary-card">
+                    <span>Food cost</span>
+                    <strong id="overallFoodCost">0.0%</strong>
+                </div>
+
+            </div>
+            
+            <div class="benchmark-panel">
+
+                <div class="benchmark-heading">
+                    <span>MENU BENCHMARKS</span>
+                    <small>Based on your current dishes</small>
+                </div>
+
+                <div class="benchmark-grid">
+
+                    <div class="benchmark-item">
+                        <span>Average sales</span>
+                        <strong id="averageUnitsSold">0</strong>
+                        <small>units per dish</small>
+                    </div>
+
+                    <div class="benchmark-item">
+                        <span>Average margin</span>
+                        <strong id="averageMargin">0.0%</strong>
+                        <small>gross margin</small>
+                    </div>
+
+                    <div class="benchmark-item">
+                        <span>Average profit</span>
+                        <strong id="averageProfitPerSale">£0.00</strong>
+                        <small>per sale</small>
+                    </div>
+
+                    <div class="benchmark-item">
+                        <span>Average total profit</span>
+                        <strong id="averageTotalProfit">£0.00</strong>
+                        <small>per dish</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div id="opportunityPanel" class="benchmark-panel opportunity-panel"></div>
+
+        </section>
+
+    </main>
+
+
+    <script src="app.js"></script>
+
+</body>
+</html>
