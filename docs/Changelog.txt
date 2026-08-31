@@ -27,6 +27,9 @@ Included:
   screens regardless of which one is on screen when you print.
 - All data is stored locally in your browser. Nothing is uploaded
   anywhere.
+- index.html is fully self-contained (styling and functionality are
+  built in), so it keeps working even if it's copied or moved on its
+  own, separately from the rest of the app folder.
 
 Note: the What-if Scenario tools were originally planned for a later
 update but shipped as part of this first release.
