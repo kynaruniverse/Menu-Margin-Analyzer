@@ -130,6 +130,11 @@ button {
     border-radius: 14px;
 }
 
+.dish-draft {
+    background: #fafaf8;
+    border-style: dashed;
+}
+
 .field {
     display: flex;
     flex-direction: column;
@@ -641,7 +646,10 @@ button {
 .dish-card input:disabled {
     opacity: 0.7;
 
-    cursor: not-allowed;
+    cursor: default;
+
+    background: #f5f5f2;
+    color: #555;
 }
 
 
@@ -672,17 +680,17 @@ button {
     color: #8a6d00;
 }
 
-.category-workhorse {
+.category-potential {
     background: #e3f0ff;
     color: #1a5aa8;
 }
 
-.category-problem {
+.category-fix {
     background: #fff0e0;
     color: #9a5100;
 }
 
-.category-deadweight {
+.category-investigate {
     background: #f2f2ef;
     color: #666;
 }

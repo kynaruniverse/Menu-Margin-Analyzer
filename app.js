@@ -221,34 +221,51 @@ function validateDish(dish) {
 -------------------------------- */
 
 function calculateDish(dish) {
-  const revenue = dish.sellingPrice * dish.unitsSold;
+  const sellingPrice = Number.isFinite(dish.sellingPrice)
+    ? dish.sellingPrice
+    : 0;
 
-  const totalIngredientCost = dish.ingredientCost * dish.unitsSold;
+  const ingredientCost = Number.isFinite(dish.ingredientCost)
+    ? dish.ingredientCost
+    : 0;
 
-  const grossProfit = dish.sellingPrice - dish.ingredientCost;
+  const unitsSold = Number.isFinite(dish.unitsSold)
+    ? Math.max(0, Math.floor(dish.unitsSold))
+    : 0;
+
+  const revenue = sellingPrice * unitsSold;
+
+  const totalIngredientCost = ingredientCost * unitsSold;
+
+  const grossProfit = sellingPrice - ingredientCost;
 
   const foodCostPercent =
-    dish.sellingPrice > 0
-      ? (dish.ingredientCost / dish.sellingPrice) * 100
+    sellingPrice > 0
+      ? (ingredientCost / sellingPrice) * 100
       : 0;
 
   const grossMarginPercent =
-    dish.sellingPrice > 0 ? (grossProfit / dish.sellingPrice) * 100 : 0;
+    sellingPrice > 0
+      ? (grossProfit / sellingPrice) * 100
+      : 0;
 
-  const totalGrossProfit = grossProfit * dish.unitsSold;
+  const totalGrossProfit = grossProfit * unitsSold;
 
   const warnings = [];
 
-  if (dish.sellingPrice > 0 && dish.ingredientCost > dish.sellingPrice) {
+  if (sellingPrice > 0 && ingredientCost > sellingPrice) {
     warnings.push("Ingredient cost is higher than selling price.");
   }
 
-  if (dish.sellingPrice === 0 && dish.unitsSold > 0) {
+  if (sellingPrice === 0 && unitsSold > 0) {
     warnings.push("Selling price is zero.");
   }
 
   return {
     ...dish,
+    sellingPrice,
+    ingredientCost,
+    unitsSold,
     revenue,
     totalIngredientCost,
     grossProfit,
@@ -399,14 +416,14 @@ function categorizeDish(dish, menu) {
   }
 
   if (!highSales && highMargin) {
-    return { code: "workhorse", label: "Workhorse", icon: "💰" };
+    return { code: "potential", label: "Potential", icon: "🟡" };
   }
 
   if (highSales && !highMargin) {
-    return { code: "problem", label: "Problem", icon: "⚠️" };
+    return { code: "fix", label: "Fix", icon: "🔴" };
   }
 
-  return { code: "deadweight", label: "Dead weight", icon: "🧊" };
+  return { code: "investigate", label: "Investigate", icon: "⚫" };
 }
 
 /* --------------------------------
@@ -422,10 +439,11 @@ function calculateOpportunity(dish, menu) {
     return null;
   }
 
-  const targetIngredientCost =
+  const benchmarkIngredientCost =
     dish.sellingPrice * (menu.overallFoodCost / 100);
 
-  const savingPerSale = dish.ingredientCost - targetIngredientCost;
+  const savingPerSale =
+    dish.ingredientCost - benchmarkIngredientCost;
 
   if (savingPerSale <= 0) {
     return null;
@@ -436,7 +454,7 @@ function calculateOpportunity(dish, menu) {
   return {
     dishName: dish.name,
     foodCostPercent: dish.foodCostPercent,
-    targetFoodCostPercent: menu.overallFoodCost,
+    benchmarkFoodCostPercent: menu.overallFoodCost,
     unitsSold: dish.unitsSold,
     monthlyImprovement,
     annualImprovement: monthlyImprovement * 12
@@ -500,18 +518,20 @@ function render() {
         `;
   }
 
-  dishes.forEach(dish => {
-    const calculated = calculateDish(dish);
+    dishes.forEach(dish => {
+    const analyticalDish = dish.confirmed && dish.saved
+      ? calculateDish({
+          id: dish.id,
+          name: dish.saved.name,
+          sellingPrice: dish.saved.sellingPrice,
+          ingredientCost: dish.saved.ingredientCost,
+          unitsSold: dish.saved.unitsSold
+        })
+      : calculateDish(dish);
 
     const scores = dish.confirmed
       ? calculatePerformanceScores(
-          calculateDish({
-            id: dish.id,
-            name: dish.saved?.name || dish.name,
-            sellingPrice: dish.saved?.sellingPrice ?? dish.sellingPrice,
-            ingredientCost: dish.saved?.ingredientCost ?? dish.ingredientCost,
-            unitsSold: dish.saved?.unitsSold ?? dish.unitsSold
-          }),
+          analyticalDish,
           menu
         )
       : {
@@ -520,7 +540,7 @@ function render() {
         };
 
     const category = dish.confirmed
-      ? categorizeDish(calculated, menu)
+      ? categorizeDish(analyticalDish, menu)
       : null;
 
     const errors = validateDish(dish);
@@ -576,6 +596,7 @@ function render() {
                     type="number"
                     min="0"
                     step="1"
+                    inputmode="numeric"
                     placeholder="420"
                     value="${dish.unitsSold || ""}"
                     data-field="unitsSold"
@@ -646,7 +667,7 @@ function render() {
                                     Gross profit
                                 </span>
                                 <strong>
-                                    ${formatCurrency(calculated.grossProfit)}
+                                    ${formatCurrency(analyticalDish.grossProfit)}
                                 </strong>
                                 <small>
                                     per sale
@@ -658,7 +679,7 @@ function render() {
                                     Margin
                                 </span>
                                 <strong>
-                                    ${calculated.grossMarginPercent.toFixed(1)}%
+                                    ${analyticalDish.grossMarginPercent.toFixed(1)}%
                                 </strong>
                                 <small>
                                     gross margin
@@ -670,7 +691,7 @@ function render() {
                                     Food cost
                                 </span>
                                 <strong>
-                                    ${calculated.foodCostPercent.toFixed(1)}%
+                                    ${analyticalDish.foodCostPercent.toFixed(1)}%
                                 </strong>
                                 <small>
                                     of selling price
@@ -682,7 +703,7 @@ function render() {
                                     Total gross profit
                                 </span>
                                 <strong>
-                                    ${formatCurrency(calculated.totalGrossProfit)}
+                                    ${formatCurrency(analyticalDish.totalGrossProfit)}
                                 </strong>
                                 <small>
                                     across ${dish.unitsSold || 0}
@@ -742,10 +763,10 @@ function render() {
             }
 
             ${
-              calculated.warnings.length > 0
+              analyticalDish.warnings.length > 0
                 ? `
                         <div class="dish-warning">
-                            ⚠ ${calculated.warnings.join(" ")}
+                            ⚠ ${analyticalDish.warnings.join(" ")}
                         </div>
                     `
                 : ""
@@ -816,7 +837,15 @@ function handleDishInput(event) {
   } else {
     const value = Number(event.target.value);
 
-    dish[field] = Number.isFinite(value) ? Math.max(0, value) : 0;
+    if (field === "unitsSold") {
+      dish[field] = Number.isFinite(value)
+        ? Math.max(0, Math.floor(value))
+        : 0;
+    } else {
+      dish[field] = Number.isFinite(value)
+        ? Math.max(0, value)
+        : 0;
+    }
   }
 
   updateDishMetrics(card, dish);
@@ -971,7 +1000,7 @@ function updateOpportunityPanel(menu) {
   panel.innerHTML = `
         <div class="benchmark-heading">
             <span>BIGGEST OPPORTUNITY</span>
-            <small>Highest food cost above your menu average</small>
+            <small>Largest opportunity above your menu food-cost benchmark</small>
         </div>
         <div class="opportunity-body">
             <strong>${escapeHtml(opportunity.dishName)}</strong>
@@ -979,7 +1008,7 @@ function updateOpportunityPanel(menu) {
                 <div>
                     <span>Food cost</span>
                     <strong>${opportunity.foodCostPercent.toFixed(1)}%</strong>
-                    <small>vs ${opportunity.targetFoodCostPercent.toFixed(1)}% menu average</small>
+                    <small>vs ${opportunity.benchmarkFoodCostPercent.toFixed(1)}% menu average</small>
                 </div>
                 <div>
                     <span>Monthly sales</span>
