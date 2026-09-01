@@ -1,38 +1,15 @@
 MENU MARGIN ANALYZER — CHANGELOG
-=================================
 
-Version 1.0
------------
-Initial release.
+v2.0
+- Full visual and structural redesign to the new Visual Design System (warm/editorial "Profit Desk" concept).
+- New navigation: Overview, Menu, Insights, Scenarios.
+- New Overview screen: biggest opportunity, KPI strip, menu health bar, ranked priorities.
+- New Insights screen: interpreted, ranked cards per dish (Strong / Grow / Optimise / Review).
+- New dish detail view: full numbers, plain-language interpretation, suggested actions, relative performance vs. menu average.
+- Redesigned Scenarios: test a price, cost, or sales change per dish with modelled monthly/annual impact.
+- Redesigned Profit Map: dishes plotted by popularity vs. margin relative to menu average.
+- Mobile: dedicated bottom navigation and card-based layouts, not a shrunk desktop view.
+- CSV import/export and the printable report carried over and re-verified.
 
-Included:
-
-- Menu screen: add, edit, confirm and remove dishes. Dishes are drafts
-  until confirmed — drafts don't affect your numbers.
-- Summary screen: total revenue, ingredient cost, gross profit, overall
-  food cost, and menu benchmarks (average sales, margin, profit per
-  sale, total profit per dish).
-- Profit Map screen: a visual scatter map plotting every confirmed dish
-  by relative sales and margin, split into four categories —
-  Strong, Grow, Optimise, Review.
-- Opportunities screen: every dish running a higher food cost than your
-  menu average, ranked by potential monthly and annual improvement,
-  plus a "Biggest Opportunity" panel on the Summary screen.
-- What-if scenarios: per-dish testing of price changes, ingredient cost
-  changes, and sales volume changes, each showing the projected
-  monthly and annual impact.
-- Sample menu: a six-dish example menu to explore the tool immediately,
-  shown automatically on first launch.
-- CSV import and export, and a printable report covering all four
-  screens regardless of which one is on screen when you print.
-- All data is stored locally in your browser. Nothing is uploaded
-  anywhere.
-- index.html is fully self-contained (styling and functionality are
-  built in), so it keeps working even if it's copied or moved on its
-  own, separately from the rest of the app folder.
-
-Note: the What-if Scenario tools were originally planned for a later
-update but shipped as part of this first release.
-
-Nothing to report yet for future versions — check back here after
-your next download for what's new.
+v1.0
+- Initial release: Menu, Summary, Profit Map and Opportunities screens.
