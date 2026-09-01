@@ -1,0 +1,2305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu Margin Analyzer</title>
+<style>
+/* ==========================================================
+   TOKENS
+   ========================================================== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --canvas: #F5F2EC;
+  --surface: #FFFCF7;
+  --text: #20211F;
+  --text-secondary: #6F706B;
+  --text-muted: #96968F;
+  --divider: #DDD9D0;
+
+  --positive: #356B52;
+  --attention: #B77922;
+  --review: #62676B;
+  --grow: #486B8C;
+  --strong: #A88942;
+
+  --positive-tint: #E7EFEA;
+  --attention-tint: #F5E9D8;
+  --review-tint: #E6E7E6;
+  --grow-tint: #E4EBF1;
+  --strong-tint: #F0E7D3;
+
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+  --space-8: 48px;
+  --space-9: 64px;
+
+  --shell-max: 1280px;
+  --content-max: 1160px;
+
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+html, body {
+  background: var(--canvas);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+body {
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select {
+  font: inherit;
+  color: inherit;
+}
+
+button { cursor: pointer; }
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--grow);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Numeral tabular alignment for financial figures */
+.num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ==========================================================
+   APP SHELL
+   ========================================================== */
+
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* --- Nav rail (desktop) --- */
+.nav-rail {
+  width: 232px;
+  flex-shrink: 0;
+  padding: var(--space-6) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+  border-right: 1px solid var(--divider);
+}
+
+.brand {
+  padding: 0 var(--space-2);
+  line-height: 1.15;
+}
+.brand-line1 {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+.brand-line2 {
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-3);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+}
+.nav-item svg { flex-shrink: 0; }
+.nav-item:hover { background: var(--surface); color: var(--text); }
+.nav-item[aria-current="page"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: inset 2px 0 0 var(--text);
+}
+
+.nav-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* --- Main content --- */
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-4);
+  border-bottom: 1px solid var(--divider);
+  position: sticky;
+  top: 0;
+  background: var(--canvas);
+  z-index: 20;
+}
+
+.content {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-6) var(--space-9);
+}
+
+.screen { display: none; }
+.screen.is-active { display: block; }
+
+.page-header {
+  margin-bottom: var(--space-6);
+}
+.page-header h1 {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: var(--space-1);
+}
+.page-header p {
+  margin-top: var(--space-2);
+  color: var(--text-secondary);
+  max-width: 60ch;
+}
+.page-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* --- Bottom nav (mobile) --- */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--divider);
+  padding: var(--space-2) var(--space-2);
+  z-index: 30;
+}
+.bottom-nav-list {
+  list-style: none;
+  display: flex;
+  justify-content: space-around;
+}
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: var(--space-1) var(--space-3);
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+}
+.bottom-nav-item[aria-current="page"] { color: var(--text); }
+
+/* ==========================================================
+   BUTTONS
+   ========================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  min-height: 44px;
+  transition: background-color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--text); color: var(--surface); }
+.btn-primary:hover { opacity: 0.88; }
+.btn-secondary { background: transparent; border-color: var(--text); color: var(--text); }
+.btn-secondary:hover { background: var(--surface); }
+.btn-tertiary { background: transparent; color: var(--text); font-weight: 600; padding: var(--space-2) var(--space-1); min-height: auto; }
+.btn-tertiary:hover { text-decoration: underline; }
+.btn-danger { background: transparent; color: var(--attention); font-weight: 600; }
+.btn-danger:hover { text-decoration: underline; }
+.btn-sm { padding: var(--space-2) var(--space-3); min-height: 36px; font-size: 13px; }
+.btn-block { width: 100%; }
+.btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+.btn-row {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* ==========================================================
+   STATUS / CATEGORY
+   ========================================================== */
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px var(--space-2);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.status-strong   { background: var(--strong-tint);   color: #6d5220; }
+.status-grow     { background: var(--grow-tint);     color: var(--grow); }
+.status-optimise { background: var(--attention-tint);color: #7a4f14; }
+.status-review   { background: var(--review-tint);   color: var(--review); }
+.status-unranked { background: var(--review-tint);   color: var(--text-muted); }
+
+/* ==========================================================
+   HERO INSIGHT (Overview)
+   ========================================================== */
+
+.hero-card {
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+.hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.hero-card h2 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+.hero-detail {
+  color: var(--text-secondary);
+  max-width: 52ch;
+  margin-bottom: var(--space-5);
+}
+.hero-detail .num { color: var(--text); font-weight: 600; }
+.hero-potential-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: var(--space-1);
+}
+.hero-potential-value {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--positive);
+  letter-spacing: -0.01em;
+  margin-bottom: var(--space-5);
+}
+.hero-empty {
+  color: var(--text-secondary);
+}
+
+/* ==========================================================
+   KPI STRIP
+   ========================================================== */
+
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--divider);
+  border-bottom: 1px solid var(--divider);
+  margin-bottom: var(--space-7);
+}
+.kpi {
+  padding: var(--space-5) var(--space-4);
+  border-left: 1px solid var(--divider);
+}
+.kpi:first-child { border-left: none; padding-left: 0; }
+.kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+.kpi-value {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ==========================================================
+   SECTION HEADINGS
+   ========================================================== */
+
+.section {
+  margin-bottom: var(--space-7);
+}
+.section-heading {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+}
+
+/* ==========================================================
+   MENU HEALTH
+   ========================================================== */
+
+.health-summary {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+}
+.health-summary .num { color: var(--text); font-weight: 600; }
+.health-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--divider);
+  margin-bottom: var(--space-3);
+}
+.health-bar-seg { height: 100%; }
+.health-bar-seg.strong   { background: var(--strong); }
+.health-bar-seg.grow     { background: var(--grow); }
+.health-bar-seg.optimise { background: var(--attention); }
+.health-bar-seg.review   { background: var(--review); }
+.health-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.health-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.legend-dot.strong   { background: var(--strong); }
+.legend-dot.grow     { background: var(--grow); }
+.legend-dot.optimise { background: var(--attention); }
+.legend-dot.review   { background: var(--review); }
+
+/* ==========================================================
+   RANKED PRIORITY LIST (Overview)
+   ========================================================== */
+
+.priority-list {
+  list-style: none;
+  border-top: 1px solid var(--divider);
+}
+.priority-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--divider);
+  width: 100%;
+  background: none;
+  border-left: none; border-right: none; border-top: none;
+  text-align: left;
+}
+.priority-rank {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  width: 20px;
+  flex-shrink: 0;
+}
+.priority-body { flex: 1; min-width: 0; }
+.priority-name { font-weight: 600; }
+.priority-meta { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+.priority-value {
+  font-weight: 600;
+  color: var(--positive);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.priority-value.neutral { color: var(--text-secondary); font-weight: 500; }
+
+/* ==========================================================
+   CARDS (used sparingly: insights, scenarios)
+   ========================================================== */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+}
+
+/* ==========================================================
+   MENU SCREEN — table (desktop)
+   ========================================================== */
+
+.table-wrap { overflow-x: auto; }
+.dish-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.dish-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--divider);
+  white-space: nowrap;
+}
+.dish-table td {
+  padding: var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--divider);
+  vertical-align: middle;
+}
+.dish-table tbody tr {
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+.dish-table tbody tr:hover { background: var(--surface); }
+.dish-table td.num-col { font-variant-numeric: tabular-nums; }
+.dish-name-cell { font-weight: 600; }
+.dish-status-cell { text-align: right; }
+
+/* --- Mobile dish cards --- */
+.dish-cards { display: none; flex-direction: column; gap: var(--space-3); }
+.dish-card {
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  text-align: left;
+  width: 100%;
+}
+.dish-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.dish-card-name { font-weight: 600; font-size: 15px; }
+.dish-card-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: var(--space-3); }
+.dish-card-stats {
+  display: flex;
+  gap: var(--space-5);
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+}
+.dish-card-stats .num { color: var(--text); font-weight: 600; }
+.dish-card-potential {
+  font-size: 13px;
+  color: var(--positive);
+  font-weight: 600;
+}
+
+/* ==========================================================
+   ADD / EDIT DISH FORM
+   ========================================================== */
+
+.dish-form {
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  margin-bottom: var(--space-2);
+}
+.field input {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+  background: var(--canvas);
+  font-size: 14px;
+}
+.field input:focus { border-color: var(--text); background: var(--surface); }
+.field-error { color: var(--attention); font-size: 12px; margin-top: var(--space-1); }
+.form-warning {
+  font-size: 13px;
+  color: var(--attention);
+  margin-bottom: var(--space-4);
+}
+
+/* ==========================================================
+   PROFIT MAP
+   ========================================================== */
+
+.profit-map-wrap { background: var(--surface); border: 1px solid var(--divider); border-radius: var(--radius-md); padding: var(--space-5); }
+.profit-map-header { margin-bottom: var(--space-4); }
+.profit-map-header h3 { font-size: 16px; font-weight: 600; margin-bottom: var(--space-1); }
+.profit-map-header p { color: var(--text-secondary); font-size: 13px; }
+.profit-map-svg { width: 100%; height: auto; }
+.pm-quadrant-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  fill: var(--text-muted);
+  text-transform: uppercase;
+}
+.pm-dot { cursor: pointer; }
+.pm-dot circle { transition: r 150ms ease; }
+.pm-dot:hover circle { r: 8; }
+.pm-tooltip {
+  position: absolute;
+  background: var(--text);
+  color: var(--surface);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  pointer-events: none;
+  transform: translate(-50%, -120%);
+  white-space: nowrap;
+  z-index: 5;
+  display: none;
+}
+.pm-tooltip.is-visible { display: block; }
+
+/* ==========================================================
+   INSIGHTS SCREEN
+   ========================================================== */
+
+.insight-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.insight-card {
+  background: var(--surface);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  border-left: 3px solid var(--divider);
+}
+.insight-card.type-strong   { border-left-color: var(--strong); }
+.insight-card.type-grow     { border-left-color: var(--grow); }
+.insight-card.type-optimise { border-left-color: var(--attention); }
+.insight-card.type-review   { border-left-color: var(--review); }
+
+.insight-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+.insight-headline { font-size: 16px; font-weight: 600; margin-bottom: var(--space-2); }
+.insight-body { color: var(--text-secondary); margin-bottom: var(--space-3); max-width: 62ch; }
+.insight-stats {
+  display: flex;
+  gap: var(--space-5);
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+.insight-stats .num { color: var(--text); font-weight: 600; }
+.insight-potential {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 2px;
+}
+.insight-potential-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--positive);
+  margin-bottom: var(--space-3);
+}
+
+/* ==========================================================
+   EMPTY STATES
+   ========================================================== */
+
+.empty-state {
+  background: var(--surface);
+  border: 1px dashed var(--divider);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+}
+.empty-state h2 { font-size: 18px; font-weight: 600; margin-bottom: var(--space-2); }
+.empty-state p { color: var(--text-secondary); max-width: 48ch; margin: 0 auto var(--space-3); }
+.empty-state ul {
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: var(--space-5);
+}
+.empty-state .btn-row { justify-content: center; margin-top: var(--space-5); }
+
+/* ==========================================================
+   MODALS (dish detail / onboarding)
+   ========================================================== */
+
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(32, 33, 31, 0.4);
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-6) var(--space-4);
+  overflow-y: auto;
+  z-index: 100;
+}
+.modal-overlay.is-open { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  max-width: 560px;
+  width: 100%;
+  padding: var(--space-6);
+  margin: auto 0;
+  box-shadow: 0 8px 28px rgba(32,33,31,0.14);
+}
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+.modal-title { font-size: 20px; font-weight: 600; }
+.modal-close {
+  background: none; border: none;
+  color: var(--text-muted);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  min-width: 36px; min-height: 36px;
+}
+.modal-close:hover { background: var(--canvas); color: var(--text); }
+
+.detail-numbers { margin: var(--space-5) 0; }
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--divider);
+  font-size: 14px;
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-row .label { color: var(--text-secondary); }
+.detail-row .value { font-weight: 600; }
+
+.meaning-block { margin-bottom: var(--space-5); }
+.meaning-block p { color: var(--text-secondary); }
+
+.rel-bar-row { margin-bottom: var(--space-4); }
+.rel-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: var(--space-1);
+}
+.rel-bar-track {
+  position: relative;
+  height: 6px;
+  background: var(--divider);
+  border-radius: 999px;
+  overflow: visible;
+}
+.rel-bar-avg-mark {
+  position: absolute;
+  top: -3px;
+  width: 2px; height: 12px;
+  background: var(--text-muted);
+}
+.rel-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--text);
+}
+
+.action-list {
+  list-style: none;
+  margin-bottom: var(--space-5);
+}
+.action-list li {
+  padding: var(--space-2) 0 var(--space-2) var(--space-4);
+  position: relative;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.action-list li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 13px;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+/* ==========================================================
+   SCENARIOS SCREEN
+   ========================================================== */
+
+.scenario-picker {
+  margin-bottom: var(--space-6);
+  max-width: 360px;
+}
+.scenario-picker select {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+.scenario-card { text-align: center; }
+.scenario-card-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+}
+.scenario-current { font-size: 13px; color: var(--text-secondary); margin-bottom: var(--space-1); }
+.scenario-current .num { color: var(--text); font-weight: 600; }
+.scenario-input-row { margin: var(--space-3) 0; }
+.scenario-input-row label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: var(--space-1); }
+.scenario-input-row input {
+  width: 100%;
+  text-align: center;
+  padding: var(--space-2);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+}
+.scenario-potential-label { font-size: 12px; color: var(--text-muted); margin-top: var(--space-3); }
+.scenario-potential-value { font-size: 20px; font-weight: 700; color: var(--positive); margin-top: 2px; }
+.scenario-disclaimer {
+  margin-top: var(--space-6);
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 60ch;
+}
+
+/* ==========================================================
+   ONBOARDING
+   ========================================================== */
+
+.onboarding-steps { list-style: none; margin: var(--space-5) 0; display: flex; flex-direction: column; gap: var(--space-4); }
+.onboarding-step { display: flex; gap: var(--space-3); }
+.onboarding-step-num {
+  flex-shrink: 0;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--canvas);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+}
+.onboarding-step-title { font-weight: 600; font-size: 14px; }
+.onboarding-step-body { font-size: 13px; color: var(--text-secondary); }
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 1100px) {
+  .nav-rail { display: none; }
+  .topbar { display: flex; }
+  .bottom-nav { display: block; }
+  .content { padding: var(--space-5) var(--space-4) calc(var(--space-9) + 56px); }
+  .kpi-strip { grid-template-columns: repeat(2, 1fr); row-gap: var(--space-4); }
+  .kpi:nth-child(3) { border-left: none; padding-left: 0; }
+  .form-grid { grid-template-columns: repeat(2, 1fr); }
+  .scenario-grid { grid-template-columns: 1fr; }
+  .dish-table { display: none; }
+  .dish-cards { display: flex; }
+}
+
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .hero-potential-value { font-size: 28px; }
+}
+
+/* ==========================================================
+   PRINT
+   ========================================================== */
+
+@media print {
+  .nav-rail, .topbar, .bottom-nav, .modal-overlay, .no-print { display: none !important; }
+  .app { display: block; }
+  .content { max-width: none; padding: 0; }
+  #printReport { display: block !important; }
+  .screen { display: none !important; }
+}
+#printReport { display: none; }
+
+/* ==========================================================
+   REDUCED MOTION
+   ========================================================== */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===================== NAV RAIL (desktop) ===================== -->
+  <nav class="nav-rail" aria-label="Primary">
+    <div class="brand">
+      <div class="brand-line1">MENU MARGIN</div>
+      <div class="brand-line2">ANALYZER</div>
+    </div>
+
+    <ul class="nav-list">
+      <li><button class="nav-item" data-nav="overview" aria-current="page">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Overview
+      </button></li>
+      <li><button class="nav-item" data-nav="menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+        Menu
+      </button></li>
+      <li><button class="nav-item" data-nav="insights">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/></svg>
+        Insights
+      </button></li>
+      <li><button class="nav-item" data-nav="scenarios">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="4" x2="5" y2="20"/><circle cx="5" cy="9" r="2"/><line x1="12" y1="4" x2="12" y2="20"/><circle cx="12" cy="15" r="2"/><line x1="19" y1="4" x2="19" y2="20"/><circle cx="19" cy="7" r="2"/></svg>
+        Scenarios
+      </button></li>
+    </ul>
+
+    <div class="nav-footer">
+      <button class="nav-item" id="railImportBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg>
+        Import CSV
+      </button>
+      <button class="nav-item" id="railExportBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 20h16"/></svg>
+        Export CSV
+      </button>
+      <button class="nav-item" id="railPrintBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="6" y="13" width="12" height="8"/><path d="M4 9h16v6H4z"/></svg>
+        Print report
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===================== MAIN ===================== -->
+  <div class="main">
+
+    <div class="topbar no-print">
+      <div class="brand">
+        <div class="brand-line1">MENU MARGIN</div>
+        <div class="brand-line2">ANALYZER</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary btn-sm" id="topImportBtn">Import</button>
+        <button class="btn btn-secondary btn-sm" id="topExportBtn">Export</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ===================== OVERVIEW ===================== -->
+      <section class="screen is-active" id="screen-overview">
+        <div class="page-header">
+          <div class="eyebrow">Menu performance</div>
+          <h1>Your menu at a glance</h1>
+          <p>A quick view of performance, profitability and where attention may be worthwhile.</p>
+        </div>
+
+        <div id="overviewEmpty"></div>
+
+        <div id="overviewContent" style="display:none;">
+          <div class="hero-card" id="heroCard"></div>
+
+          <div class="kpi-strip" id="kpiStrip"></div>
+
+          <div class="section">
+            <div class="section-heading">Menu health</div>
+            <div id="menuHealth"></div>
+          </div>
+
+          <div class="section">
+            <div class="section-heading">What deserves attention</div>
+            <ul class="priority-list" id="priorityList"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== MENU ===================== -->
+      <section class="screen" id="screen-menu">
+        <div class="page-header">
+          <div class="page-header-row">
+            <div>
+              <div class="eyebrow">Your dishes</div>
+              <h1>Menu</h1>
+              <p>Review individual dishes and compare them with your menu.</p>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="addDishBtn">+ Add dish</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="dishFormWrap"></div>
+
+        <div id="menuEmpty"></div>
+
+        <div id="menuContent" style="display:none;">
+          <div class="table-wrap">
+            <table class="dish-table">
+              <thead>
+                <tr>
+                  <th>Dish</th>
+                  <th>Sales</th>
+                  <th>Margin</th>
+                  <th>Food cost</th>
+                  <th class="dish-status-cell">Status</th>
+                </tr>
+              </thead>
+              <tbody id="dishTableBody"></tbody>
+            </table>
+          </div>
+          <div class="dish-cards" id="dishCards"></div>
+
+          <div class="section" style="margin-top: var(--space-7);">
+            <div class="profit-map-wrap" style="position:relative;">
+              <div class="profit-map-header">
+                <h3>Where your dishes sit</h3>
+                <p>Popularity compared with relative margin.</p>
+              </div>
+              <div id="profitMapMount"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== INSIGHTS ===================== -->
+      <section class="screen" id="screen-insights">
+        <div class="page-header">
+          <div class="eyebrow">Interpreted for you</div>
+          <h1>What deserves attention?</h1>
+          <p>Your menu, interpreted.</p>
+        </div>
+        <div id="insightsEmpty"></div>
+        <div class="insight-stack" id="insightStack"></div>
+      </section>
+
+      <!-- ===================== SCENARIOS ===================== -->
+      <section class="screen" id="screen-scenarios">
+        <div class="page-header">
+          <div class="eyebrow">Test a change</div>
+          <h1>Explore what could happen</h1>
+          <p>Nothing changes in your menu — this is a modelled scenario only.</p>
+        </div>
+
+        <div id="scenariosEmpty"></div>
+
+        <div id="scenariosContent" style="display:none;">
+          <div class="scenario-picker">
+            <label for="scenarioDishSelect" class="eyebrow" style="display:block; margin-bottom: var(--space-2);">Dish</label>
+            <select id="scenarioDishSelect"></select>
+          </div>
+          <div id="scenarioBody"></div>
+        </div>
+      </section>
+
+      <!-- ===================== PRINT REPORT ===================== -->
+      <div id="printReport"></div>
+
+    </div>
+  </div>
+
+  <!-- ===================== BOTTOM NAV (mobile) ===================== -->
+  <nav class="bottom-nav no-print" aria-label="Primary">
+    <ul class="bottom-nav-list">
+      <li><button class="bottom-nav-item" data-nav="overview" aria-current="page">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        Overview
+      </button></li>
+      <li><button class="bottom-nav-item" data-nav="menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+        Menu
+      </button></li>
+      <li><button class="bottom-nav-item" data-nav="insights">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/></svg>
+        Insights
+      </button></li>
+    </ul>
+  </nav>
+
+</div>
+
+<!-- ===================== DISH DETAIL MODAL ===================== -->
+<div class="modal-overlay no-print" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
+  <div class="modal" id="detailModalBody"></div>
+</div>
+
+<!-- ===================== ONBOARDING MODAL ===================== -->
+<div class="modal-overlay no-print" id="onboardingModal" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="brand-line1" id="onboardingTitle">MENU MARGIN ANALYZER</div>
+      </div>
+      <button class="modal-close" id="onboardingCloseBtn" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+      </button>
+    </div>
+    <h2 style="font-size:22px; font-weight:600; margin-top: var(--space-2);">Turn menu numbers into decisions.</h2>
+    <ul class="onboarding-steps">
+      <li class="onboarding-step">
+        <div class="onboarding-step-num">1</div>
+        <div>
+          <div class="onboarding-step-title">Add your dishes</div>
+          <div class="onboarding-step-body">Price, ingredient cost and monthly sales.</div>
+        </div>
+      </li>
+      <li class="onboarding-step">
+        <div class="onboarding-step-num">2</div>
+        <div>
+          <div class="onboarding-step-title">Confirm your numbers</div>
+          <div class="onboarding-step-body">Only confirmed dishes enter analysis.</div>
+        </div>
+      </li>
+      <li class="onboarding-step">
+        <div class="onboarding-step-num">3</div>
+        <div>
+          <div class="onboarding-step-title">Find what deserves attention</div>
+          <div class="onboarding-step-body">The application compares your menu and surfaces opportunities.</div>
+        </div>
+      </li>
+    </ul>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="onboardingSampleBtn">Try sample menu</button>
+      <button class="btn btn-secondary" id="onboardingStartBtn">Start my menu</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="csvFileInput" accept=".csv" class="visually-hidden">
+
+<script>
+"use strict";
+
+/* ============================================================
+   CONSTANTS
+   ============================================================ */
+
+const STORAGE_KEY = "mma_menu_v2";
+const ONBOARDING_KEY = "mma_onboarded_v2";
+const CURRENCY_LOCALE = "en-GB";
+const CURRENCY_CODE = "GBP";
+
+const SAMPLE_MENU = [
+  { name: "Chicken Burger",    sellingPrice: 15.00, ingredientCost: 5.20,  unitsSold: 420 },
+  { name: "Fish & Chips",      sellingPrice: 14.50, ingredientCost: 6.80,  unitsSold: 260 },
+  { name: "Veggie Curry",      sellingPrice: 12.00, ingredientCost: 3.10,  unitsSold: 90  },
+  { name: "Ribeye Steak",      sellingPrice: 26.00, ingredientCost: 11.50, unitsSold: 140 },
+  { name: "Caesar Salad",      sellingPrice: 9.50,  ingredientCost: 2.20,  unitsSold: 310 },
+  { name: "Mushroom Risotto",  sellingPrice: 13.50, ingredientCost: 4.00,  unitsSold: 60  }
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+
+let dishes = [];         // committed dishes: {id, name, sellingPrice, ingredientCost, unitsSold}
+let editingDraft = null; // {id: existingId|null, name, sellingPrice, ingredientCost, unitsSold}
+let nextId = 1;
+let currentScreen = "overview";
+let detailDishId = null;
+let scenarioDishId = null;
+let pmTooltipTimer = null;
+
+/* ============================================================
+   PERSISTENCE
+   ============================================================ */
+
+function saveDishes() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dishes));
+  } catch (e) { /* storage unavailable — ignore */ }
+}
+
+function loadDishes() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return null;
+    return parsed;
+  } catch (e) {
+    return null;
+  }
+}
+
+function hasSeenOnboarding() {
+  try { return localStorage.getItem(ONBOARDING_KEY) === "1"; }
+  catch (e) { return true; }
+}
+
+function markOnboardingSeen() {
+  try { localStorage.setItem(ONBOARDING_KEY, "1"); }
+  catch (e) { /* ignore */ }
+}
+
+/* ============================================================
+   CALCULATION ENGINE
+   ============================================================ */
+
+function calcDish(raw) {
+  const sellingPrice = Number.isFinite(raw.sellingPrice) ? raw.sellingPrice : 0;
+  const ingredientCost = Number.isFinite(raw.ingredientCost) ? raw.ingredientCost : 0;
+  const unitsSold = Number.isFinite(raw.unitsSold) ? Math.max(0, Math.floor(raw.unitsSold)) : 0;
+
+  const revenue = sellingPrice * unitsSold;
+  const totalIngredientCost = ingredientCost * unitsSold;
+  const grossProfit = sellingPrice - ingredientCost;
+  const foodCostPercent = sellingPrice > 0 ? (ingredientCost / sellingPrice) * 100 : 0;
+  const grossMarginPercent = sellingPrice > 0 ? (grossProfit / sellingPrice) * 100 : 0;
+  const totalGrossProfit = grossProfit * unitsSold;
+
+  const warnings = [];
+  if (sellingPrice > 0 && ingredientCost > sellingPrice) {
+    warnings.push("Ingredient cost is higher than selling price.");
+  }
+  if (sellingPrice === 0 && unitsSold > 0) {
+    warnings.push("Selling price is zero.");
+  }
+
+  return {
+    id: raw.id, name: raw.name,
+    sellingPrice, ingredientCost, unitsSold,
+    revenue, totalIngredientCost, grossProfit,
+    foodCostPercent, grossMarginPercent, totalGrossProfit,
+    warnings
+  };
+}
+
+function calcMenu(dishList) {
+  const calculated = dishList.map(calcDish);
+
+  const totalRevenue = calculated.reduce((s, d) => s + d.revenue, 0);
+  const totalIngredientCost = calculated.reduce((s, d) => s + d.totalIngredientCost, 0);
+  const totalGrossProfit = calculated.reduce((s, d) => s + d.totalGrossProfit, 0);
+  const totalUnits = calculated.reduce((s, d) => s + d.unitsSold, 0);
+
+  const overallFoodCost = totalRevenue > 0 ? (totalIngredientCost / totalRevenue) * 100 : 0;
+  const dishCount = calculated.length;
+
+  const averageUnitsSold = dishCount > 0
+    ? calculated.reduce((s, d) => s + d.unitsSold, 0) / dishCount : 0;
+
+  const averageMargin = dishCount > 0
+    ? calculated.reduce((s, d) => s + d.grossMarginPercent, 0) / dishCount : 0;
+
+  return {
+    totalRevenue, totalIngredientCost, totalGrossProfit, totalUnits,
+    overallFoodCost, dishCount, averageUnitsSold, averageMargin,
+    dishes: calculated
+  };
+}
+
+function categorize(dish, menu) {
+  if (menu.dishCount < 2) {
+    return { code: "unranked", label: "Add another dish to compare", icon: "—" };
+  }
+  const highSales = dish.unitsSold >= menu.averageUnitsSold;
+  const highMargin = dish.grossMarginPercent >= menu.averageMargin;
+
+  if (highSales && highMargin)  return { code: "strong",   label: "Strong",   icon: "\u2B50" };
+  if (!highSales && highMargin) return { code: "grow",     label: "Grow",     icon: "\uD83D\uDE80" };
+  if (highSales && !highMargin) return { code: "optimise", label: "Optimise", icon: "\u26A0\uFE0F" };
+  return { code: "review", label: "Review", icon: "\uD83E\uDDCA" };
+}
+
+function opportunity(dish, menu) {
+  if (menu.dishCount === 0 || dish.sellingPrice <= 0 || dish.unitsSold <= 0) return null;
+  if (dish.foodCostPercent <= menu.overallFoodCost) return null;
+
+  const benchmarkIngredientCost = dish.sellingPrice * (menu.overallFoodCost / 100);
+  const savingPerSale = dish.ingredientCost - benchmarkIngredientCost;
+  if (savingPerSale <= 0) return null;
+
+  const monthlyImprovement = savingPerSale * dish.unitsSold;
+  return { monthlyImprovement, annualImprovement: monthlyImprovement * 12 };
+}
+
+function priceScenario(dish, testPrice) {
+  const m = (testPrice - dish.sellingPrice) * dish.unitsSold;
+  return { monthlyImprovement: m, annualImprovement: m * 12 };
+}
+function costScenario(dish, testCost) {
+  const m = (dish.ingredientCost - testCost) * dish.unitsSold;
+  return { monthlyImprovement: m, annualImprovement: m * 12 };
+}
+function salesScenario(dish, testUnits) {
+  const m = (testUnits - dish.unitsSold) * dish.grossProfit;
+  return { monthlyImprovement: m, annualImprovement: m * 12 };
+}
+
+/* ============================================================
+   FORMATTING
+   ============================================================ */
+
+function fmtCurrency(value) {
+  return new Intl.NumberFormat(CURRENCY_LOCALE, {
+    style: "currency", currency: CURRENCY_CODE,
+    minimumFractionDigits: 2, maximumFractionDigits: 2
+  }).format(value);
+}
+function fmtCurrencyCompact(value) {
+  const abs = Math.abs(value);
+  if (abs >= 1000) {
+    return (value < 0 ? "\u2212" : "") + "£" + (abs / 1000).toFixed(1) + "k";
+  }
+  return fmtCurrency(value);
+}
+function fmtSigned(value) {
+  const sign = value > 0 ? "+" : value < 0 ? "\u2212" : "";
+  return `${sign}${fmtCurrency(Math.abs(value))}`;
+}
+function fmtPercent(value) {
+  return `${value.toFixed(1)}%`;
+}
+function esc(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[ch]));
+}
+
+/* ============================================================
+   INTERPRETATION COPY
+   ============================================================ */
+
+const CATEGORY_COPY = {
+  strong: {
+    headline: (d) => `${d.name} is one of your strongest dishes.`,
+    meaning: (d) => "This dish performs well on both sales and margin — a reliable earner on your menu.",
+    actions: ["Protect its position — keep the recipe and portioning consistent.", "Watch ingredient cost drift so it doesn't slip out of this category."]
+  },
+  grow: {
+    headline: (d) => `${d.name} has strong economics but lower demand.`,
+    meaning: (d) => "This dish carries a healthy margin but sells below your menu average. There may be room to sell more of it.",
+    actions: ["Consider menu placement or visibility.", "Try a staff recommendation or a small promotion.", "Test a price change in Scenarios to see the effect on profit."]
+  },
+  optimise: {
+    headline: (d) => `${d.name} is popular, but carrying a higher food cost.`,
+    meaning: (d) => "This dish sells well, but its food cost is above your menu average. Because it also sells frequently, even a modest improvement could have a meaningful effect.",
+    actions: ["Review the recipe cost or portion size.", "Check current supplier pricing.", "Test a price increase in Scenarios."]
+  },
+  review: {
+    headline: (d) => `${d.name} currently deserves investigation.`,
+    meaning: (d) => "This dish is behind your menu average on both sales and margin. Worth deciding whether to improve, reprice, or remove it.",
+    actions: ["Consider reworking the recipe or price.", "Consider removing it if performance doesn't improve.", "Test a scenario before making a change."]
+  },
+  unranked: {
+    headline: (d) => `${d.name} needs more menu context.`,
+    meaning: () => "Add at least one more dish so this one can be compared against a menu average.",
+    actions: ["Add another dish to unlock comparison."]
+  }
+};
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+
+function setScreen(name) {
+  currentScreen = name;
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("is-active"));
+  document.getElementById(`screen-${name}`).classList.add("is-active");
+
+  document.querySelectorAll("[data-nav]").forEach(el => {
+    if (el.dataset.nav === name) el.setAttribute("aria-current", "page");
+    else el.removeAttribute("aria-current");
+  });
+
+  if (name === "scenarios") renderScenarios();
+  window.scrollTo({ top: 0 });
+}
+
+document.querySelectorAll("[data-nav]").forEach(el => {
+  el.addEventListener("click", () => setScreen(el.dataset.nav));
+});
+
+/* ============================================================
+   RENDER — OVERVIEW
+   ============================================================ */
+
+function renderOverview() {
+  const menu = calcMenu(dishes);
+  const emptyEl = document.getElementById("overviewEmpty");
+  const contentEl = document.getElementById("overviewContent");
+
+  if (menu.dishCount === 0) {
+    emptyEl.innerHTML = emptyStateHtml();
+    emptyEl.style.display = "block";
+    contentEl.style.display = "none";
+    wireEmptyState(emptyEl);
+    return;
+  }
+  emptyEl.style.display = "none";
+  contentEl.style.display = "block";
+
+  // Hero: biggest opportunity
+  let biggest = null;
+  menu.dishes.forEach(d => {
+    const opp = opportunity(d, menu);
+    if (opp && (!biggest || opp.monthlyImprovement > biggest.opp.monthlyImprovement)) {
+      biggest = { dish: d, opp };
+    }
+  });
+
+  const heroEl = document.getElementById("heroCard");
+  if (biggest) {
+    heroEl.innerHTML = `
+      <div class="hero-top"><div class="eyebrow">Biggest opportunity</div></div>
+      <h2>${esc(biggest.dish.name)}</h2>
+      <p class="hero-detail">Food cost is <span class="num">${fmtPercent(biggest.dish.foodCostPercent)}</span> against your menu average of <span class="num">${fmtPercent(menu.overallFoodCost)}</span>.</p>
+      <div class="hero-potential-label">Potential improvement</div>
+      <div class="hero-potential-value num">${fmtSigned(biggest.opp.monthlyImprovement)} / month</div>
+      <button class="btn btn-tertiary" data-open-detail="${biggest.dish.id}">View dish &rarr;</button>
+    `;
+  } else {
+    heroEl.innerHTML = `
+      <div class="hero-top"><div class="eyebrow">Menu performance</div></div>
+      <h2>No dish is running above your menu's average food cost.</h2>
+      <p class="hero-empty">Nothing stands out as an immediate opportunity right now — check Insights for the fuller picture.</p>
+    `;
+  }
+  heroEl.querySelectorAll("[data-open-detail]").forEach(btn =>
+    btn.addEventListener("click", () => openDetail(Number(btn.dataset.openDetail)))
+  );
+
+  // KPI strip
+  document.getElementById("kpiStrip").innerHTML = `
+    <div class="kpi"><div class="kpi-label">Revenue</div><div class="kpi-value num">${fmtCurrencyCompact(menu.totalRevenue)}</div></div>
+    <div class="kpi"><div class="kpi-label">Gross profit</div><div class="kpi-value num">${fmtCurrencyCompact(menu.totalGrossProfit)}</div></div>
+    <div class="kpi"><div class="kpi-label">Food cost</div><div class="kpi-value num">${fmtPercent(menu.overallFoodCost)}</div></div>
+    <div class="kpi"><div class="kpi-label">Items analysed</div><div class="kpi-value num">${menu.dishCount}</div></div>
+  `;
+
+  // Menu health
+  const counts = { strong: 0, grow: 0, optimise: 0, review: 0 };
+  menu.dishes.forEach(d => {
+    const cat = categorize(d, menu);
+    if (counts[cat.code] !== undefined) counts[cat.code]++;
+  });
+  const total = menu.dishCount || 1;
+  document.getElementById("menuHealth").innerHTML = `
+    <p class="health-summary"><span class="num">${menu.dishCount}</span> dish${menu.dishCount === 1 ? "" : "es"} analysed</p>
+    <div class="health-bar">
+      ${["strong","grow","optimise","review"].map(k => counts[k] > 0
+        ? `<div class="health-bar-seg ${k}" style="width:${(counts[k] / total) * 100}%"></div>` : "").join("")}
+    </div>
+    <div class="health-legend">
+      <span class="health-legend-item"><span class="legend-dot strong"></span>${counts.strong} Strong</span>
+      <span class="health-legend-item"><span class="legend-dot grow"></span>${counts.grow} Grow</span>
+      <span class="health-legend-item"><span class="legend-dot optimise"></span>${counts.optimise} Optimise</span>
+      <span class="health-legend-item"><span class="legend-dot review"></span>${counts.review} Review</span>
+    </div>
+  `;
+
+  // Priority list — top 3 from the same ranking used in Insights
+  const ranked = buildInsightRanking(menu);
+  const top3 = ranked.slice(0, 3);
+  const listEl = document.getElementById("priorityList");
+  if (top3.length === 0) {
+    listEl.innerHTML = `<li class="priority-item" style="cursor:default;"><div class="priority-body"><div class="priority-meta">Nothing needs immediate attention — your menu looks balanced.</div></div></li>`;
+  } else {
+    listEl.innerHTML = top3.map((item, i) => `
+      <li>
+        <button class="priority-item" data-open-detail="${item.dish.id}">
+          <span class="priority-rank">${String(i + 1).padStart(2, "0")}</span>
+          <span class="priority-body">
+            <span class="priority-name">${esc(item.dish.name)}</span>
+            <span class="priority-meta">${item.meta}</span>
+          </span>
+          <span class="priority-value ${item.value ? "" : "neutral"}">${item.value ? item.value : "View"}</span>
+        </button>
+      </li>
+    `).join("");
+  }
+  listEl.querySelectorAll("[data-open-detail]").forEach(btn =>
+    btn.addEventListener("click", () => openDetail(Number(btn.dataset.openDetail)))
+  );
+}
+
+/* Shared ranking used by both Overview's "what deserves attention" and the Insights screen */
+function buildInsightRanking(menu) {
+  const items = [];
+  menu.dishes.forEach(d => {
+    const cat = categorize(d, menu);
+    const opp = opportunity(d, menu);
+    let meta = "";
+    if (cat.code === "optimise") {
+      meta = `High sales \u00b7 ${fmtPercent(d.foodCostPercent)} food cost`;
+    } else if (cat.code === "grow") {
+      meta = `${fmtPercent(d.grossMarginPercent)} margin \u00b7 below-average sales`;
+    } else if (cat.code === "review") {
+      meta = "Below average on sales and margin";
+    } else if (cat.code === "strong") {
+      meta = `${fmtPercent(d.grossMarginPercent)} margin \u00b7 strong sales`;
+    } else {
+      meta = "Add another dish to compare";
+    }
+
+    // A monetary opportunity is a food-cost-vs-benchmark calculation, independent of
+    // category — so it's shown wherever it's real, not only for "Optimise" dishes.
+    let value = "";
+    if (opp) {
+      value = `${fmtSigned(opp.monthlyImprovement)}/mo`;
+    } else if (cat.code === "grow") {
+      value = "Growth opportunity";
+    }
+
+    items.push({
+      dish: d, category: cat, meta, value,
+      sortValue: opp ? opp.monthlyImprovement : -1
+    });
+  });
+
+  const order = { optimise: 0, grow: 1, review: 2, strong: 3, unranked: 4 };
+  items.sort((a, b) => {
+    const oa = order[a.category.code], ob = order[b.category.code];
+    if (oa !== ob) return oa - ob;
+    return b.sortValue - a.sortValue;
+  });
+  return items;
+}
+
+/* ============================================================
+   EMPTY STATE (shared)
+   ============================================================ */
+
+function emptyStateHtml() {
+  return `
+    <div class="empty-state">
+      <h2>Your menu is ready to analyse</h2>
+      <p>Add your dishes to see menu benchmarks, profitability, performance categories and opportunities.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" data-empty-add>Add first dish</button>
+        <button class="btn btn-secondary" data-empty-sample>Load sample menu</button>
+      </div>
+    </div>
+  `;
+}
+function wireEmptyState(container) {
+  const addBtn = container.querySelector("[data-empty-add]");
+  const sampleBtn = container.querySelector("[data-empty-sample]");
+  if (addBtn) addBtn.addEventListener("click", () => { setScreen("menu"); startAddDish(); });
+  if (sampleBtn) sampleBtn.addEventListener("click", loadSampleMenu);
+}
+
+/* ============================================================
+   RENDER — MENU SCREEN
+   ============================================================ */
+
+function renderMenu() {
+  const menu = calcMenu(dishes);
+  const emptyEl = document.getElementById("menuEmpty");
+  const contentEl = document.getElementById("menuContent");
+
+  if (menu.dishCount === 0 && !editingDraft) {
+    emptyEl.innerHTML = emptyStateHtml();
+    emptyEl.style.display = "block";
+    contentEl.style.display = "none";
+    wireEmptyState(emptyEl);
+    renderProfitMap(menu);
+    return;
+  }
+  emptyEl.style.display = "none";
+  contentEl.style.display = menu.dishCount > 0 ? "block" : "none";
+
+  // Table (desktop)
+  const tbody = document.getElementById("dishTableBody");
+  tbody.innerHTML = menu.dishes.map(d => {
+    const cat = categorize(d, menu);
+    return `
+      <tr data-open-detail="${d.id}" tabindex="0">
+        <td class="dish-name-cell">${esc(d.name)}</td>
+        <td class="num-col">${d.unitsSold}</td>
+        <td class="num-col">${fmtPercent(d.grossMarginPercent)}</td>
+        <td class="num-col">${fmtPercent(d.foodCostPercent)}</td>
+        <td class="dish-status-cell"><span class="status-pill status-${cat.code}">${cat.icon} ${cat.label}</span></td>
+      </tr>
+    `;
+  }).join("");
+  tbody.querySelectorAll("[data-open-detail]").forEach(row => {
+    row.addEventListener("click", () => openDetail(Number(row.dataset.openDetail)));
+    row.addEventListener("keydown", (e) => { if (e.key === "Enter") openDetail(Number(row.dataset.openDetail)); });
+  });
+
+  // Cards (mobile)
+  const cardsEl = document.getElementById("dishCards");
+  cardsEl.innerHTML = menu.dishes.map(d => {
+    const cat = categorize(d, menu);
+    const opp = opportunity(d, menu);
+    return `
+      <button class="dish-card" data-open-detail="${d.id}">
+        <div class="dish-card-top">
+          <div class="dish-card-name">${esc(d.name)}</div>
+          <span class="status-pill status-${cat.code}">${cat.icon} ${cat.label}</span>
+        </div>
+        <div class="dish-card-sub">${d.unitsSold} sales / month</div>
+        <div class="dish-card-stats">
+          <span><span class="num">${fmtCurrency(d.grossProfit)}</span> gross profit</span>
+          <span><span class="num">${fmtPercent(d.grossMarginPercent)}</span> margin</span>
+        </div>
+        <div class="dish-card-stats" style="margin-bottom:0;">
+          <span><span class="num">${fmtPercent(d.foodCostPercent)}</span> food cost</span>
+        </div>
+        ${opp ? `<div class="dish-card-potential" style="margin-top:var(--space-2);">Potential improvement: ${fmtSigned(opp.monthlyImprovement)}/month</div>` : ""}
+      </button>
+    `;
+  }).join("");
+  cardsEl.querySelectorAll("[data-open-detail]").forEach(card =>
+    card.addEventListener("click", () => openDetail(Number(card.dataset.openDetail)))
+  );
+
+  renderProfitMap(menu);
+}
+
+/* ============================================================
+   ADD / EDIT DISH FORM
+   ============================================================ */
+
+function startAddDish() {
+  editingDraft = { id: null, name: "", sellingPrice: null, ingredientCost: null, unitsSold: null };
+  renderDishForm();
+  renderMenu();
+  const nameInput = document.getElementById("draftName");
+  if (nameInput) nameInput.focus();
+}
+
+function startEditDish(id) {
+  const d = dishes.find(x => x.id === id);
+  if (!d) return;
+  editingDraft = { id: d.id, name: d.name, sellingPrice: d.sellingPrice, ingredientCost: d.ingredientCost, unitsSold: d.unitsSold };
+  closeDetail();
+  setScreen("menu");
+  renderDishForm();
+  renderMenu();
+}
+
+function cancelDishForm() {
+  editingDraft = null;
+  renderDishForm();
+  renderMenu();
+}
+
+function renderDishForm() {
+  const wrap = document.getElementById("dishFormWrap");
+  if (!editingDraft) { wrap.innerHTML = ""; return; }
+
+  const d = editingDraft;
+  const isNew = d.id === null;
+
+  wrap.innerHTML = `
+    <div class="dish-form">
+      <div class="eyebrow" style="margin-bottom: var(--space-3);">${isNew ? "New dish (draft)" : "Editing dish"}</div>
+      <p style="color:var(--text-secondary); font-size:13px; margin-bottom:var(--space-4);">
+        ${isNew ? "Drafts don't affect your numbers until you confirm them." : "Changes apply once you save."}
+      </p>
+      <div class="form-grid">
+        <div class="field">
+          <label for="draftName">Dish name</label>
+          <input id="draftName" type="text" placeholder="e.g. Chicken Burger" value="${esc(d.name || "")}">
+        </div>
+        <div class="field">
+          <label for="draftPrice">Selling price (£)</label>
+          <input id="draftPrice" type="number" step="0.01" min="0" placeholder="15.00" value="${d.sellingPrice ?? ""}">
+        </div>
+        <div class="field">
+          <label for="draftCost">Ingredient cost (£)</label>
+          <input id="draftCost" type="number" step="0.01" min="0" placeholder="5.20" value="${d.ingredientCost ?? ""}">
+        </div>
+        <div class="field">
+          <label for="draftUnits">Monthly units sold</label>
+          <input id="draftUnits" type="number" step="1" min="0" placeholder="420" value="${d.unitsSold ?? ""}">
+        </div>
+      </div>
+      <div id="draftWarning"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="confirmDraftBtn">${isNew ? "Confirm dish" : "Save changes"}</button>
+        <button class="btn btn-secondary" id="cancelDraftBtn">Cancel</button>
+        ${!isNew ? `<button class="btn btn-danger" id="removeDraftBtn" style="margin-left:auto;">Remove dish</button>` : ""}
+      </div>
+    </div>
+  `;
+
+  document.getElementById("draftName").addEventListener("input", (e) => { editingDraft.name = e.target.value; });
+  document.getElementById("draftPrice").addEventListener("input", (e) => { editingDraft.sellingPrice = e.target.value === "" ? null : Number(e.target.value); });
+  document.getElementById("draftCost").addEventListener("input", (e) => { editingDraft.ingredientCost = e.target.value === "" ? null : Number(e.target.value); });
+  document.getElementById("draftUnits").addEventListener("input", (e) => { editingDraft.unitsSold = e.target.value === "" ? null : Number(e.target.value); });
+  document.getElementById("confirmDraftBtn").addEventListener("click", saveDishForm);
+  document.getElementById("cancelDraftBtn").addEventListener("click", cancelDishForm);
+  const removeBtn = document.getElementById("removeDraftBtn");
+  if (removeBtn) removeBtn.addEventListener("click", () => {
+    removeDish(d.id);
+    editingDraft = null;
+    renderAll();
+  });
+}
+
+function saveDishForm() {
+  const d = editingDraft;
+  const warningEl = document.getElementById("draftWarning");
+  const errors = [];
+
+  const name = (d.name || "").trim();
+  const price = Number(d.sellingPrice);
+  const cost = Number(d.ingredientCost);
+  const units = Number(d.unitsSold);
+
+  if (!name) errors.push("Enter a dish name.");
+  if (!Number.isFinite(price) || price < 0) errors.push("Selling price must be zero or greater.");
+  if (!Number.isFinite(cost) || cost < 0) errors.push("Ingredient cost must be zero or greater.");
+  if (!Number.isFinite(units) || units < 0 || !Number.isInteger(units)) errors.push("Units sold must be a whole number, zero or greater.");
+
+  if (errors.length > 0) {
+    warningEl.innerHTML = `<div class="form-warning">${errors.map(esc).join(" ")}</div>`;
+    return;
+  }
+
+  if (d.id === null) {
+    dishes.push({ id: nextId++, name, sellingPrice: price, ingredientCost: cost, unitsSold: units });
+  } else {
+    const existing = dishes.find(x => x.id === d.id);
+    if (existing) {
+      existing.name = name; existing.sellingPrice = price;
+      existing.ingredientCost = cost; existing.unitsSold = units;
+    }
+  }
+  saveDishes();
+  editingDraft = null;
+  renderAll();
+}
+
+function removeDish(id) {
+  dishes = dishes.filter(d => d.id !== id);
+  saveDishes();
+}
+
+/* ============================================================
+   PROFIT MAP
+   ============================================================ */
+
+function renderProfitMap(menu) {
+  const mount = document.getElementById("profitMapMount");
+  if (!mount) return;
+
+  if (menu.dishCount < 2) {
+    mount.innerHTML = `<p style="color:var(--text-secondary); font-size:13px;">Add at least two confirmed dishes to see the profit map.</p>`;
+    return;
+  }
+
+  const W = 640, H = 360, PAD = 32;
+  const MAX_MULTIPLE = 2; // dots clamp at 200% of the menu average, so the centre line = "at average"
+
+  const midX = PAD + (W - PAD * 2) / 2;
+  const midY = PAD + (H - PAD * 2) / 2;
+
+  const colorFor = { strong: "var(--strong)", grow: "var(--grow)", optimise: "var(--attention)", review: "var(--review)", unranked: "var(--text-muted)" };
+
+  // Position is relative to the menu average (not the raw min/max range), so a dot's
+  // quadrant always matches its status colour — both are judged against the same average.
+  function positionFraction(scoreVsAverage) {
+    const clamped = Math.max(0, Math.min(scoreVsAverage, MAX_MULTIPLE));
+    return clamped / MAX_MULTIPLE;
+  }
+
+  const points = menu.dishes.map(d => {
+    const cat = categorize(d, menu);
+    const salesScore = menu.averageUnitsSold > 0 ? d.unitsSold / menu.averageUnitsSold : 1;
+    const marginScore = menu.averageMargin > 0 ? d.grossMarginPercent / menu.averageMargin : 1;
+    const x = PAD + positionFraction(salesScore) * (W - PAD * 2);
+    const y = H - PAD - positionFraction(marginScore) * (H - PAD * 2);
+    return { d, cat, x, y };
+  });
+
+  const svg = `
+    <svg class="profit-map-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Profit map of confirmed dishes">
+      <line x1="${midX}" y1="${PAD}" x2="${midX}" y2="${H - PAD}" stroke="var(--divider)" stroke-width="1"/>
+      <line x1="${PAD}" y1="${midY}" x2="${W - PAD}" y2="${midY}" stroke="var(--divider)" stroke-width="1"/>
+      <text class="pm-quadrant-label" x="${PAD}" y="${PAD - 8}">Grow</text>
+      <text class="pm-quadrant-label" x="${W - PAD}" y="${PAD - 8}" text-anchor="end">Strong</text>
+      <text class="pm-quadrant-label" x="${PAD}" y="${H - PAD + 20}">Review</text>
+      <text class="pm-quadrant-label" x="${W - PAD}" y="${H - PAD + 20}" text-anchor="end">Optimise</text>
+      <text class="pm-quadrant-label" x="${W / 2}" y="${H - 6}" text-anchor="middle" style="text-transform:none; letter-spacing:0;">Popularity &rarr;</text>
+      <text class="pm-quadrant-label" x="14" y="${H / 2}" text-anchor="middle" transform="rotate(-90 14 ${H / 2})" style="text-transform:none; letter-spacing:0;">Margin &uarr;</text>
+      ${points.map(p => `
+        <g class="pm-dot" data-pm-id="${p.d.id}">
+          <circle cx="${p.x}" cy="${p.y}" r="6" fill="${colorFor[p.cat.code]}" stroke="var(--surface)" stroke-width="1.5"/>
+        </g>
+      `).join("")}
+    </svg>
+    <div class="pm-tooltip" id="pmTooltip"></div>
+  `;
+  mount.innerHTML = svg;
+
+  const tooltip = document.getElementById("pmTooltip");
+  mount.querySelectorAll("[data-pm-id]").forEach(dot => {
+    const p = points.find(pt => pt.d.id === Number(dot.dataset.pmId));
+    dot.addEventListener("mouseenter", (e) => {
+      tooltip.innerHTML = `${esc(p.d.name)}<br>${p.d.unitsSold} sales \u00b7 ${fmtPercent(p.d.grossMarginPercent)} margin<br>${p.cat.icon} ${p.cat.label}`;
+      tooltip.classList.add("is-visible");
+    });
+    dot.addEventListener("mousemove", (e) => {
+      const rect = mount.getBoundingClientRect();
+      tooltip.style.left = (e.clientX - rect.left) + "px";
+      tooltip.style.top = (e.clientY - rect.top) + "px";
+    });
+    dot.addEventListener("mouseleave", () => tooltip.classList.remove("is-visible"));
+    dot.addEventListener("click", () => openDetail(p.d.id));
+  });
+}
+
+/* ============================================================
+   RENDER — INSIGHTS SCREEN
+   ============================================================ */
+
+function renderInsights() {
+  const menu = calcMenu(dishes);
+  const emptyEl = document.getElementById("insightsEmpty");
+  const stackEl = document.getElementById("insightStack");
+
+  if (menu.dishCount === 0) {
+    emptyEl.innerHTML = emptyStateHtml();
+    emptyEl.style.display = "block";
+    stackEl.innerHTML = "";
+    wireEmptyState(emptyEl);
+    return;
+  }
+  emptyEl.style.display = "none";
+
+  const ranked = buildInsightRanking(menu);
+
+  stackEl.innerHTML = ranked.map(item => {
+    const copy = CATEGORY_COPY[item.category.code];
+    const d = item.dish;
+    const opp = opportunity(d, menu);
+    return `
+      <div class="insight-card type-${item.category.code}">
+        <div class="insight-top">
+          <span class="status-pill status-${item.category.code}">${item.category.icon} ${item.category.label}</span>
+        </div>
+        <div class="insight-headline">${esc(copy.headline(d))}</div>
+        <p class="insight-body">${esc(copy.meaning(d))}</p>
+        <div class="insight-stats">
+          <span><span class="num">${d.unitsSold}</span> sales</span>
+          <span><span class="num">${fmtPercent(d.grossMarginPercent)}</span> margin</span>
+          <span><span class="num">${fmtPercent(d.foodCostPercent)}</span> food cost</span>
+        </div>
+        ${opp ? `
+          <div class="insight-potential">Potential improvement</div>
+          <div class="insight-potential-value num">${fmtSigned(opp.monthlyImprovement)} / month</div>
+        ` : ""}
+        <button class="btn btn-tertiary" data-open-detail="${d.id}" style="padding-left:0;">View analysis &rarr;</button>
+      </div>
+    `;
+  }).join("");
+
+  stackEl.querySelectorAll("[data-open-detail]").forEach(btn =>
+    btn.addEventListener("click", () => openDetail(Number(btn.dataset.openDetail)))
+  );
+}
+
+/* ============================================================
+   DISH DETAIL MODAL
+   ============================================================ */
+
+function openDetail(id) {
+  detailDishId = id;
+  const menu = calcMenu(dishes);
+  const d = menu.dishes.find(x => x.id === id);
+  if (!d) return;
+
+  const cat = categorize(d, menu);
+  const copy = CATEGORY_COPY[cat.code];
+  const opp = opportunity(d, menu);
+
+  const salesPct = menu.averageUnitsSold > 0 ? (d.unitsSold / menu.averageUnitsSold) * 100 : 0;
+  const marginPct = menu.averageMargin > 0 ? (d.grossMarginPercent / menu.averageMargin) * 100 : 0;
+
+  const body = document.getElementById("detailModalBody");
+  body.innerHTML = `
+    <div class="modal-header">
+      <div>
+        <div id="detailModalTitle" class="modal-title">${esc(d.name)}</div>
+        <span class="status-pill status-${cat.code}" style="margin-top:var(--space-2); display:inline-flex;">${cat.icon} ${cat.label}</span>
+      </div>
+      <button class="modal-close" id="detailCloseBtn" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+      </button>
+    </div>
+
+    <div class="section-heading" style="margin-top:var(--space-5);">The numbers</div>
+    <div class="detail-numbers">
+      <div class="detail-row"><span class="label">Selling price</span><span class="value num">${fmtCurrency(d.sellingPrice)}</span></div>
+      <div class="detail-row"><span class="label">Ingredient cost</span><span class="value num">${fmtCurrency(d.ingredientCost)}</span></div>
+      <div class="detail-row"><span class="label">Gross profit</span><span class="value num">${fmtCurrency(d.grossProfit)}</span></div>
+      <div class="detail-row"><span class="label">Gross margin</span><span class="value num">${fmtPercent(d.grossMarginPercent)}</span></div>
+      <div class="detail-row"><span class="label">Food cost</span><span class="value num">${fmtPercent(d.foodCostPercent)}</span></div>
+      <div class="detail-row"><span class="label">Monthly sales</span><span class="value num">${d.unitsSold}</span></div>
+      <div class="detail-row"><span class="label">Monthly gross profit</span><span class="value num">${fmtCurrency(d.totalGrossProfit)}</span></div>
+    </div>
+
+    ${menu.dishCount >= 2 ? `
+      <div class="section-heading">Relative to your menu</div>
+      <div class="rel-bar-row">
+        <div class="rel-bar-label"><span>Sales</span><span class="num">${Math.round(salesPct)}% of menu average</span></div>
+        <div class="rel-bar-track"><div class="rel-bar-fill" style="width:${Math.min(100, salesPct)}%;"></div></div>
+      </div>
+      <div class="rel-bar-row">
+        <div class="rel-bar-label"><span>Margin</span><span class="num">${Math.round(marginPct)}% of menu average</span></div>
+        <div class="rel-bar-track"><div class="rel-bar-fill" style="width:${Math.min(100, marginPct)}%;"></div></div>
+      </div>
+    ` : ""}
+
+    <div class="meaning-block">
+      <div class="section-heading">What this means</div>
+      <p>${esc(copy.meaning(d))}</p>
+    </div>
+
+    <div class="section-heading">Worth investigating</div>
+    <ul class="action-list">${copy.actions.map(a => `<li>${esc(a)}</li>`).join("")}</ul>
+
+    ${opp ? `
+      <div class="card" style="margin-bottom:var(--space-5); background:var(--canvas);">
+        <div class="insight-potential">Potential improvement</div>
+        <div class="insight-potential-value num">${fmtSigned(opp.monthlyImprovement)} / month</div>
+        <p style="font-size:12px; color:var(--text-muted);">${fmtSigned(opp.annualImprovement)} / year modelled, if brought in line with your menu's average food cost.</p>
+      </div>
+    ` : ""}
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="detailScenarioBtn">Test a change</button>
+      <button class="btn btn-secondary" id="detailEditBtn">Edit dish</button>
+    </div>
+  `;
+
+  document.getElementById("detailCloseBtn").addEventListener("click", closeDetail);
+  document.getElementById("detailEditBtn").addEventListener("click", () => startEditDish(d.id));
+  document.getElementById("detailScenarioBtn").addEventListener("click", () => {
+    closeDetail();
+    scenarioDishId = d.id;
+    setScreen("scenarios");
+  });
+
+  document.getElementById("detailModal").classList.add("is-open");
+}
+
+function closeDetail() {
+  document.getElementById("detailModal").classList.remove("is-open");
+  detailDishId = null;
+}
+document.getElementById("detailModal").addEventListener("click", (e) => {
+  if (e.target.id === "detailModal") closeDetail();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { closeDetail(); closeOnboarding(); }
+});
+
+/* ============================================================
+   RENDER — SCENARIOS SCREEN
+   ============================================================ */
+
+function renderScenarios() {
+  const menu = calcMenu(dishes);
+  const emptyEl = document.getElementById("scenariosEmpty");
+  const contentEl = document.getElementById("scenariosContent");
+
+  if (menu.dishCount === 0) {
+    emptyEl.innerHTML = emptyStateHtml();
+    emptyEl.style.display = "block";
+    contentEl.style.display = "none";
+    wireEmptyState(emptyEl);
+    return;
+  }
+  emptyEl.style.display = "none";
+  contentEl.style.display = "block";
+
+  if (!scenarioDishId || !menu.dishes.find(d => d.id === scenarioDishId)) {
+    scenarioDishId = menu.dishes[0].id;
+  }
+
+  const select = document.getElementById("scenarioDishSelect");
+  select.innerHTML = menu.dishes.map(d =>
+    `<option value="${d.id}" ${d.id === scenarioDishId ? "selected" : ""}>${esc(d.name)}</option>`
+  ).join("");
+  select.onchange = () => { scenarioDishId = Number(select.value); renderScenarioBody(); };
+
+  renderScenarioBody();
+}
+
+function renderScenarioBody() {
+  const menu = calcMenu(dishes);
+  const d = menu.dishes.find(x => x.id === scenarioDishId);
+  const bodyEl = document.getElementById("scenarioBody");
+  if (!d) { bodyEl.innerHTML = ""; return; }
+
+  bodyEl.innerHTML = `
+    <div class="scenario-grid">
+      <div class="card scenario-card">
+        <div class="scenario-card-label">Price</div>
+        <div class="scenario-current">Current <span class="num">${fmtCurrency(d.sellingPrice)}</span></div>
+        <div class="scenario-input-row">
+          <label for="priceTestInput">Test</label>
+          <input id="priceTestInput" type="number" step="0.01" value="${d.sellingPrice.toFixed(2)}">
+        </div>
+        <div class="scenario-potential-label">Potential</div>
+        <div class="scenario-potential-value num" id="priceTestResult"></div>
+      </div>
+      <div class="card scenario-card">
+        <div class="scenario-card-label">Cost</div>
+        <div class="scenario-current">Current <span class="num">${fmtCurrency(d.ingredientCost)}</span></div>
+        <div class="scenario-input-row">
+          <label for="costTestInput">Test</label>
+          <input id="costTestInput" type="number" step="0.01" value="${d.ingredientCost.toFixed(2)}">
+        </div>
+        <div class="scenario-potential-label">Potential</div>
+        <div class="scenario-potential-value num" id="costTestResult"></div>
+      </div>
+      <div class="card scenario-card">
+        <div class="scenario-card-label">Sales</div>
+        <div class="scenario-current">Current <span class="num">${d.unitsSold}</span> / month</div>
+        <div class="scenario-input-row">
+          <label for="salesTestInput">Test</label>
+          <input id="salesTestInput" type="number" step="1" value="${d.unitsSold}">
+        </div>
+        <div class="scenario-potential-label">Potential</div>
+        <div class="scenario-potential-value num" id="salesTestResult"></div>
+      </div>
+    </div>
+    <p class="scenario-disclaimer">Potential improvement is a modelled scenario, not a guaranteed result.</p>
+  `;
+
+  const priceInput = document.getElementById("priceTestInput");
+  const costInput = document.getElementById("costTestInput");
+  const salesInput = document.getElementById("salesTestInput");
+
+  function updatePrice() {
+    const v = Number(priceInput.value);
+    const el = document.getElementById("priceTestResult");
+    if (!Number.isFinite(v)) { el.textContent = "—"; return; }
+    const r = priceScenario(d, v);
+    el.textContent = `${fmtSigned(r.monthlyImprovement)}/mo`;
+  }
+  function updateCost() {
+    const v = Number(costInput.value);
+    const el = document.getElementById("costTestResult");
+    if (!Number.isFinite(v)) { el.textContent = "—"; return; }
+    const r = costScenario(d, v);
+    el.textContent = `${fmtSigned(r.monthlyImprovement)}/mo`;
+  }
+  function updateSales() {
+    const v = Math.max(0, Math.floor(Number(salesInput.value)));
+    const el = document.getElementById("salesTestResult");
+    if (!Number.isFinite(v)) { el.textContent = "—"; return; }
+    const r = salesScenario(d, v);
+    el.textContent = `${fmtSigned(r.monthlyImprovement)}/mo`;
+  }
+
+  priceInput.addEventListener("input", updatePrice);
+  costInput.addEventListener("input", updateCost);
+  salesInput.addEventListener("input", updateSales);
+  updatePrice(); updateCost(); updateSales();
+}
+
+/* ============================================================
+   CSV IMPORT / EXPORT
+   ============================================================ */
+
+function csvEscape(value) {
+  const s = String(value);
+  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function exportCsv() {
+  const rows = [["Dish", "Selling Price", "Ingredient Cost", "Units Sold"]];
+  dishes.forEach(d => rows.push([d.name, d.sellingPrice.toFixed(2), d.ingredientCost.toFixed(2), d.unitsSold]));
+  const csv = rows.map(r => r.map(csvEscape).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "menu-margin-analyzer-export.csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function splitCsvLine(line) {
+  const result = [];
+  let cur = "", inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+      else if (ch === '"') { inQuotes = false; }
+      else { cur += ch; }
+    } else {
+      if (ch === '"') inQuotes = true;
+      else if (ch === ",") { result.push(cur); cur = ""; }
+      else cur += ch;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+function parseCsv(text) {
+  const lines = text.split(/\r\n|\n|\r/).filter(l => l.trim() !== "");
+  if (lines.length === 0) return [];
+  const rows = lines.slice(1); // skip header
+  return rows.map(splitCsvLine).filter(cols => cols.length >= 4).map(cols => ({
+    name: cols[0].trim(),
+    sellingPrice: Number(cols[1]),
+    ingredientCost: Number(cols[2]),
+    unitsSold: Math.max(0, Math.floor(Number(cols[3])))
+  })).filter(d => d.name && Number.isFinite(d.sellingPrice) && Number.isFinite(d.ingredientCost) && Number.isFinite(d.unitsSold));
+}
+
+function importCsvFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const parsed = parseCsv(String(reader.result));
+    if (parsed.length === 0) {
+      alert("No valid dish rows were found in that file. Expected columns: Dish, Selling Price, Ingredient Cost, Units Sold.");
+      return;
+    }
+    parsed.forEach(p => dishes.push({ id: nextId++, ...p }));
+    saveDishes();
+    renderAll();
+  };
+  reader.readAsText(file);
+}
+
+function loadSampleMenu() {
+  dishes = SAMPLE_MENU.map(d => ({ id: nextId++, ...d }));
+  saveDishes();
+  renderAll();
+  setScreen("overview");
+}
+
+/* ============================================================
+   ONBOARDING
+   ============================================================ */
+
+function openOnboarding() {
+  document.getElementById("onboardingModal").classList.add("is-open");
+}
+function closeOnboarding() {
+  document.getElementById("onboardingModal").classList.remove("is-open");
+  markOnboardingSeen();
+}
+document.getElementById("onboardingCloseBtn").addEventListener("click", closeOnboarding);
+document.getElementById("onboardingStartBtn").addEventListener("click", () => { closeOnboarding(); setScreen("menu"); startAddDish(); });
+document.getElementById("onboardingSampleBtn").addEventListener("click", () => { closeOnboarding(); loadSampleMenu(); });
+
+/* ============================================================
+   PRINT REPORT
+   ============================================================ */
+
+function renderPrintReport() {
+  const menu = calcMenu(dishes);
+  const el = document.getElementById("printReport");
+  if (menu.dishCount === 0) { el.innerHTML = "<p>No dishes to report on yet.</p>"; return; }
+
+  let biggest = null;
+  menu.dishes.forEach(d => {
+    const opp = opportunity(d, menu);
+    if (opp && (!biggest || opp.monthlyImprovement > biggest.opp.monthlyImprovement)) biggest = { dish: d, opp };
+  });
+
+  el.innerHTML = `
+    <div style="font-family: Inter, sans-serif; color:#20211F; padding: 24px;">
+      <h1 style="font-size:20px; margin-bottom:4px;">Menu Margin Analyzer — Report</h1>
+      <p style="color:#6F706B; margin-bottom:24px;">${new Date().toLocaleDateString(CURRENCY_LOCALE, { day: "numeric", month: "long", year: "numeric" })}</p>
+
+      <h2 style="font-size:15px; margin-bottom:8px;">Summary</h2>
+      <table style="width:100%; border-collapse:collapse; margin-bottom:24px; font-size:13px;">
+        <tr><td style="padding:4px 0;">Revenue</td><td style="text-align:right;">${fmtCurrency(menu.totalRevenue)}</td></tr>
+        <tr><td style="padding:4px 0;">Ingredient cost</td><td style="text-align:right;">${fmtCurrency(menu.totalIngredientCost)}</td></tr>
+        <tr><td style="padding:4px 0;">Gross profit</td><td style="text-align:right;">${fmtCurrency(menu.totalGrossProfit)}</td></tr>
+        <tr><td style="padding:4px 0;">Overall food cost</td><td style="text-align:right;">${fmtPercent(menu.overallFoodCost)}</td></tr>
+        <tr><td style="padding:4px 0;">Dishes analysed</td><td style="text-align:right;">${menu.dishCount}</td></tr>
+      </table>
+
+      ${biggest ? `
+        <h2 style="font-size:15px; margin-bottom:8px;">Biggest opportunity</h2>
+        <p style="font-size:13px; margin-bottom:24px;">${esc(biggest.dish.name)} — food cost ${fmtPercent(biggest.dish.foodCostPercent)} vs menu average ${fmtPercent(menu.overallFoodCost)}. Potential improvement: ${fmtSigned(biggest.opp.monthlyImprovement)}/month (${fmtSigned(biggest.opp.annualImprovement)}/year).</p>
+      ` : ""}
+
+      <h2 style="font-size:15px; margin-bottom:8px;">Dishes</h2>
+      <table style="width:100%; border-collapse:collapse; font-size:12px;">
+        <thead><tr style="border-bottom:1px solid #DDD9D0;">
+          <th style="text-align:left; padding:4px 0;">Dish</th>
+          <th style="text-align:right; padding:4px 0;">Sales</th>
+          <th style="text-align:right; padding:4px 0;">Margin</th>
+          <th style="text-align:right; padding:4px 0;">Food cost</th>
+          <th style="text-align:right; padding:4px 0;">Status</th>
+        </tr></thead>
+        <tbody>
+          ${menu.dishes.map(d => {
+            const cat = categorize(d, menu);
+            return `<tr style="border-bottom:1px solid #EEECE6;">
+              <td style="padding:4px 0;">${esc(d.name)}</td>
+              <td style="text-align:right;">${d.unitsSold}</td>
+              <td style="text-align:right;">${fmtPercent(d.grossMarginPercent)}</td>
+              <td style="text-align:right;">${fmtPercent(d.foodCostPercent)}</td>
+              <td style="text-align:right;">${cat.label}</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function printReport() {
+  renderPrintReport();
+  window.print();
+}
+
+/* ============================================================
+   WIRE UP TOP-LEVEL CONTROLS
+   ============================================================ */
+
+document.getElementById("addDishBtn").addEventListener("click", startAddDish);
+document.getElementById("railImportBtn").addEventListener("click", () => document.getElementById("csvFileInput").click());
+document.getElementById("railExportBtn").addEventListener("click", exportCsv);
+document.getElementById("railPrintBtn").addEventListener("click", printReport);
+document.getElementById("topImportBtn").addEventListener("click", () => document.getElementById("csvFileInput").click());
+document.getElementById("topExportBtn").addEventListener("click", exportCsv);
+document.getElementById("csvFileInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) importCsvFile(file);
+  e.target.value = "";
+});
+
+/* ============================================================
+   RENDER ALL
+   ============================================================ */
+
+function renderAll() {
+  renderDishForm();
+  renderOverview();
+  renderMenu();
+  renderInsights();
+  if (currentScreen === "scenarios") renderScenarios();
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+
+function init() {
+  const loaded = loadDishes();
+  if (loaded && loaded.length > 0) {
+    dishes = loaded;
+    nextId = Math.max(...dishes.map(d => d.id), 0) + 1;
+  } else {
+    dishes = [];
+  }
+  renderAll();
+  setScreen("overview");
+
+  if (!hasSeenOnboarding()) {
+    openOnboarding();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
